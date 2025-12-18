@@ -139,13 +139,13 @@ const MatchingGame: React.FC = () => {
                               </div>
                           </div>
 
-                          {/* Sơ đồ tính trung gian (Chữ V) */}
-                          <div className="w-full relative h-16 mt-6 flex justify-center">
-                               {/* Ngoặc chữ V */}
-                               <div className="absolute top-0 left-[20%] right-[55%] h-5 border-l-2 border-b-2 border-r-2 border-blue-200 rounded-b-lg"></div>
+                          {/* Sơ đồ tính trung gian (Chữ V) - Đã căn chỉnh lệch sang phải hơn */}
+                          <div className="w-full relative h-16 mt-6 flex justify-center overflow-visible">
+                               {/* Ngoặc chữ V - Căn chỉnh chính xác dưới n1 + n2 */}
+                               <div className="absolute top-0 left-[26%] right-[48%] h-5 border-l-2 border-b-2 border-r-2 border-blue-200 rounded-b-lg"></div>
                                
-                               {/* Ô nhập trung gian */}
-                               <div className="absolute top-5 left-[37%] -translate-x-1/2">
+                               {/* Ô nhập trung gian - Nằm dưới ngoặc chữ V */}
+                               <div className="absolute top-5 left-[42%] -translate-x-1/2">
                                     <input 
                                         type="number"
                                         inputMode="numeric"
@@ -153,7 +153,7 @@ const MatchingGame: React.FC = () => {
                                         value={userStep1}
                                         onClick={(e) => e.stopPropagation()}
                                         onChange={(e) => handleIntermediateChange(bird.id, e.target.value)}
-                                        className={`w-10 h-8 text-center text-[10px] font-black rounded-lg border-2 outline-none transition-all ${
+                                        className={`w-10 h-8 text-center text-[10px] font-black rounded-lg border-2 outline-none transition-all shadow-sm ${
                                             isStep1Correct ? 'border-green-400 bg-green-50 text-green-600' :
                                             isStep1Wrong ? 'border-orange-300 bg-orange-50 text-orange-600' :
                                             'border-blue-50 bg-white focus:border-blue-200'
@@ -161,10 +161,10 @@ const MatchingGame: React.FC = () => {
                                     />
                                </div>
 
-                               {/* Mũi tên và số còn lại */}
-                               <div className="absolute top-6 left-[50%] text-[10px] text-blue-200 font-bold">→</div>
-                               <div className="absolute top-5 left-[70%] -translate-x-1/2 flex items-center gap-1 text-[10px] font-black text-gray-400">
-                                   <span>{op2}</span>
+                               {/* Mũi tên và số còn lại - Dịch sang phải để thông thoáng */}
+                               <div className="absolute top-6 left-[58%] text-[10px] text-blue-200 font-bold opacity-60">→</div>
+                               <div className="absolute top-5 left-[78%] -translate-x-1/2 flex items-center gap-1 text-[10px] font-black text-gray-400">
+                                   <span className="text-blue-300">{op2}</span>
                                    <span className="bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">{n3}</span>
                                </div>
                           </div>

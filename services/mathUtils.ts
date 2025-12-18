@@ -17,25 +17,18 @@ const SHAPE_CONFIGS = [
 ];
 
 export const generateIdentifyShapesProblem = (): MathProblem => {
-  // Chọn ngẫu nhiên 1 hình làm mục tiêu
   const target = SHAPE_CONFIGS[getRandomInt(0, SHAPE_CONFIGS.length - 1)];
-  
-  // Tạo danh sách 11 hình ngẫu nhiên (bao gồm cả hình mục tiêu và hình gây nhiễu)
   const shapes: any[] = [];
   const totalShapes = 11;
-  
-  // Đảm bảo có ít nhất 2-4 hình đúng trong danh sách
   const targetCount = getRandomInt(2, 4);
   
   for (let i = 0; i < totalShapes; i++) {
     let source;
     if (i < targetCount) {
-      source = target; // Ép buộc là hình đúng
+      source = target;
     } else {
-      // Chọn ngẫu nhiên hình bất kỳ (có thể trùng target hoặc không)
       source = SHAPE_CONFIGS[getRandomInt(0, SHAPE_CONFIGS.length - 1)];
     }
-    
     shapes.push({
       id: generateId(),
       num: i + 1,
@@ -44,58 +37,51 @@ export const generateIdentifyShapesProblem = (): MathProblem => {
       d: source.d
     });
   }
-
-  // Trộn lẫn các hình
   const shuffledShapes = shapes.sort(() => Math.random() - 0.5);
-
   return {
     id: generateId(),
     type: 'geometry',
     visualType: 'identify_shape',
     question: `Bé hãy chỉ ra các mảnh bìa là ${target.name} nhé:`,
-    visualData: { 
-      targetId: target.type, 
-      shapes: shuffledShapes 
-    },
-    answer: 0 // Logic kiểm tra được xử lý trong App.tsx dựa trên targetId
+    visualData: { targetId: target.type, shapes: shuffledShapes },
+    answer: 0
   };
 };
 
 export const generateChallengeProblem = (): MathProblem => {
-  const challengeTypes = ['dissection', 'counting', 'logic'];
+  const challengeTypes = ['dissection', 'counting', 'different', 'pattern', 'mirror'];
   const type = challengeTypes[getRandomInt(0, challengeTypes.length - 1)];
 
   if (type === 'dissection') {
+    // Hoàn thành hình vuông đơn giản
     return {
       id: generateId(),
       type: 'challenge',
       visualType: 'puzzle_logic',
-      question: "Ba mảnh bìa màu xanh dưới đây KHÔNG THỂ ghép được thành hình nào?",
-      answer: "2", 
+      question: "Hình nào là mảnh bìa còn thiếu để ghép thành hình vuông hoàn chỉnh?",
+      answer: "1",
       visualData: {
         sourceShapes: [
-          { id: 's1', d: "M 20 20 L 50 20 L 50 50 L 20 50 Z", color: '#84cc16' }, 
-          { id: 's2', d: "M 50 20 L 80 50 L 50 50 Z", color: '#84cc16' }, 
-          { id: 's3', d: "M 20 50 L 50 50 L 50 80 Z", color: '#84cc16' }
+          { id: 'base', d: "M 10 10 L 90 10 L 90 40 L 40 40 L 40 90 L 10 90 Z", color: '#a78bfa' }
         ],
         options: [
-          { id: '1', label: '1', name: 'Hình thang', d: "M 10 30 L 90 30 L 70 70 L 30 70 Z" }, 
-          { id: '2', label: '2', name: 'Hình tròn', d: "M 50 50 m -35 0 a 35 35 0 1 0 70 0 a 35 35 0 1 0 -70 0" }, 
-          { id: '3', label: '3', name: 'Hình chữ nhật', d: "M 10 20 L 90 20 L 90 80 L 10 80 Z" }
+          { id: '1', label: 'A', name: 'Mảnh ghép A', d: "M 40 40 L 90 40 L 90 90 L 40 90 Z" }, // Hình vuông nhỏ
+          { id: '2', label: 'B', name: 'Mảnh ghép B', d: "M 50 10 L 90 50 L 10 50 Z" }, // Tam giác
+          { id: '3', label: 'C', name: 'Mảnh ghép C', d: "M 50 50 m -30 0 a 30 30 0 1 0 60 0 a 30 30 0 1 0 -60 0" } // Hình tròn
         ]
       }
     };
   } else if (type === 'counting') {
-    const correctIdx = getRandomInt(0, 2);
+    // Đếm hình vuông trong cửa sổ 2x2 (Đơn giản cho lớp 2)
     return {
       id: generateId(),
       type: 'challenge',
       visualType: 'puzzle_logic',
-      question: `Hình vẽ dưới đây có bao nhiêu hình tứ giác?`,
-      answer: (correctIdx + 1).toString(),
+      question: "Hình bên có bao nhiêu hình vuông nhỏ?",
+      answer: "2",
       visualData: {
         sourceShapes: [
-          { id: 'q1', d: "M 10 10 L 90 10 L 90 90 L 10 90 L 10 10 M 10 10 L 90 90 M 90 10 L 10 90", color: '#fb7185' }
+          { id: 'grid', d: "M 10 10 L 90 10 L 90 90 L 10 90 Z M 10 50 L 90 50 M 50 10 L 50 90", color: '#fb7185' }
         ],
         options: [
           { id: '1', label: 'A', name: '3 hình', d: "M 30 40 L 70 40 L 70 60 L 30 60 Z" },
@@ -104,21 +90,61 @@ export const generateChallengeProblem = (): MathProblem => {
         ]
       }
     };
-  } else {
+  } else if (type === 'different') {
+    // Tìm hình khác biệt về màu sắc hoặc loại
     return {
       id: generateId(),
       type: 'challenge',
       visualType: 'puzzle_logic',
-      question: "Hình nào là mảnh bìa còn thiếu để hoàn thành hình vuông?",
+      question: "Trong 3 hình dưới đây, hình nào có màu sắc KHÁC biệt?",
+      answer: "3",
+      visualData: {
+        sourceShapes: [],
+        options: [
+          { id: '1', label: 'A', name: 'Hình xanh', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z", color: '#3b82f6' },
+          { id: '2', label: 'B', name: 'Hình xanh', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z", color: '#3b82f6' },
+          { id: '3', label: 'C', name: 'Hình vàng', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z", color: '#fbce15' }
+        ]
+      }
+    };
+  } else if (type === 'pattern') {
+    // Dãy quy luật đơn giản: Tròn - Vuông - Tròn - ?
+    return {
+      id: generateId(),
+      type: 'challenge',
+      visualType: 'puzzle_logic',
+      question: "Bé hãy tìm hình tiếp theo của dãy: Tròn - Vuông - Tròn - ... ?",
+      answer: "2",
+      visualData: {
+        sourceShapes: [
+           { id: 'p1', d: "M 20 30 m -15 0 a 15 15 0 1 0 30 0 a 15 15 0 1 0 -30 0", color: '#34d399' },
+           { id: 'p2', d: "M 45 15 L 75 15 L 75 45 L 45 45 Z", color: '#f87171' },
+           { id: 'p3', d: "M 90 30 m -15 0 a 15 15 0 1 0 30 0 a 15 15 0 1 0 -30 0", color: '#34d399' }
+        ],
+        options: [
+          { id: '1', label: 'A', name: 'Hình Tròn', d: "M 50 50 m -30 0 a 30 30 0 1 0 60 0 a 30 30 0 1 0 -60 0", color: '#34d399' },
+          { id: '2', label: 'B', name: 'Hình Vuông', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z", color: '#f87171' },
+          { id: '3', label: 'C', name: 'Hình Tam Giác', d: "M 50 15 L 85 85 L 15 85 Z", color: '#60a5fa' }
+        ]
+      }
+    };
+  } else {
+    // Đối xứng đơn giản
+    return {
+      id: generateId(),
+      type: 'challenge',
+      visualType: 'puzzle_logic',
+      question: "Đâu là hình đối xứng qua gương của hình bên trái?",
       answer: "1",
       visualData: {
         sourceShapes: [
-          { id: 'base', d: "M 10 10 L 90 10 L 90 50 L 50 50 L 50 90 L 10 90 Z", color: '#a78bfa' }
+          { id: 's1', d: "M 20 20 L 50 50 L 20 80 Z", color: '#8b5cf6' },
+          { id: 'line', d: "M 80 10 L 80 90", color: '#e2e8f0' }
         ],
         options: [
-          { id: '1', label: 'A', name: 'Mảnh thiếu', d: "M 50 50 L 90 50 L 90 90 L 50 90 Z" },
-          { id: '2', label: 'B', name: 'Mảnh sai', d: "M 10 10 L 40 10 L 25 40 Z" },
-          { id: '3', label: 'C', name: 'Mảnh sai', d: "M 20 20 L 80 20 L 50 80 Z" }
+          { id: '1', label: 'A', name: 'Hình A', d: "M 80 20 L 50 50 L 80 80 Z", color: '#8b5cf6' },
+          { id: '2', label: 'B', name: 'Hình B', d: "M 20 20 L 50 50 L 20 80 Z", color: '#8b5cf6' },
+          { id: '3', label: 'C', name: 'Hình C', d: "M 50 20 L 80 50 L 50 80 Z", color: '#ec4899' }
         ]
       }
     };

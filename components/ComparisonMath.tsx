@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MathProblem } from '../types';
 
 interface Props {
@@ -10,10 +10,24 @@ interface Props {
 
 const ComparisonMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
   const [showSelector, setShowSelector] = useState(false);
+  const [leftIntermediate, setLeftIntermediate] = useState('');
+  const [rightIntermediate, setRightIntermediate] = useState('');
+  
   const nums = problem.numbers || [0, 0, 0, 0];
   const userAns = problem.userAnswer || '';
   const isCorrect = showResult && userAns === problem.answer;
   const isWrong = showResult && userAns !== '' && !isCorrect;
+
+  const leftTarget = nums[0] + nums[1];
+  const rightTarget = nums[2] + nums[3];
+
+  const isLeftCorrect = leftIntermediate !== '' && parseInt(leftIntermediate) === leftTarget;
+  const isRightCorrect = rightIntermediate !== '' && parseInt(rightIntermediate) === rightTarget;
+
+  useEffect(() => {
+    setLeftIntermediate('');
+    setRightIntermediate('');
+  }, [problem.id]);
 
   const handleSelect = (val: string) => {
     if (showResult) return;
@@ -24,19 +38,42 @@ const ComparisonMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
   const SYMBOLS = ['>', '<', '='];
 
   return (
-    <div className={`p-6 rounded-3xl border-2 flex flex-col items-center bg-white shadow-sm transition-all duration-300 relative ${
+    <div className={`p-8 rounded-[40px] border-2 flex flex-col items-center bg-white shadow-sm transition-all duration-300 relative ${
         showResult ? (isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50') : 'border-indigo-100 hover:border-indigo-300'
     }`}>
-      <div className="flex items-center gap-4 sm:gap-8 w-full justify-center">
-        {/* Left Side */}
-        <div className="flex items-center gap-2 text-2xl font-black text-gray-700 font-mono bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
-            <span>{nums[0]}</span>
-            <span className="text-indigo-400 text-xl">+</span>
-            <span>{nums[1]}</span>
+      <div className="flex items-center gap-4 sm:gap-10 w-full justify-center">
+        
+        {/* Left Side Container */}
+        <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2 text-2xl font-black text-gray-700 font-mono bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+                <span>{nums[0]}</span>
+                <span className="text-indigo-400 text-xl">+</span>
+                <span>{nums[1]}</span>
+            </div>
+            
+            {/* V Diagram Left */}
+            <div className="relative w-full h-14 mt-1">
+                <div className="absolute top-0 left-[15%] right-[15%] h-5 border-l-2 border-b-2 border-r-2 border-indigo-200 rounded-b-lg"></div>
+                <div className="absolute top-4 left-1/2 -translate-x-1/2">
+                    <input 
+                        type="number"
+                        inputMode="numeric"
+                        placeholder="..."
+                        value={leftIntermediate}
+                        onChange={(e) => setLeftIntermediate(e.target.value)}
+                        disabled={showResult}
+                        className={`w-12 h-8 text-center text-xs font-black rounded-lg border-2 outline-none transition-all shadow-sm ${
+                            isLeftCorrect ? 'border-green-400 bg-green-50 text-green-600' :
+                            leftIntermediate !== '' ? 'border-orange-300 bg-orange-50 text-orange-600' :
+                            'border-indigo-50 bg-white focus:border-indigo-200'
+                        }`}
+                    />
+                </div>
+            </div>
         </div>
 
         {/* Comparison Circle */}
-        <div className="relative">
+        <div className="relative mb-14">
             <button 
                 onClick={() => !showResult && setShowSelector(!showSelector)}
                 className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-4 flex items-center justify-center text-3xl font-black transition-all shadow-md z-10 relative
@@ -65,11 +102,33 @@ const ComparisonMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
             )}
         </div>
 
-        {/* Right Side */}
-        <div className="flex items-center gap-2 text-2xl font-black text-gray-700 font-mono bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
-            <span>{nums[2]}</span>
-            <span className="text-indigo-400 text-xl">+</span>
-            <span>{nums[3]}</span>
+        {/* Right Side Container */}
+        <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2 text-2xl font-black text-gray-700 font-mono bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+                <span>{nums[2]}</span>
+                <span className="text-indigo-400 text-xl">+</span>
+                <span>{nums[3]}</span>
+            </div>
+
+            {/* V Diagram Right */}
+            <div className="relative w-full h-14 mt-1">
+                <div className="absolute top-0 left-[15%] right-[15%] h-5 border-l-2 border-b-2 border-r-2 border-indigo-200 rounded-b-lg"></div>
+                <div className="absolute top-4 left-1/2 -translate-x-1/2">
+                    <input 
+                        type="number"
+                        inputMode="numeric"
+                        placeholder="..."
+                        value={rightIntermediate}
+                        onChange={(e) => setRightIntermediate(e.target.value)}
+                        disabled={showResult}
+                        className={`w-12 h-8 text-center text-xs font-black rounded-lg border-2 outline-none transition-all shadow-sm ${
+                            isRightCorrect ? 'border-green-400 bg-green-50 text-green-600' :
+                            rightIntermediate !== '' ? 'border-orange-300 bg-orange-50 text-orange-600' :
+                            'border-indigo-50 bg-white focus:border-indigo-200'
+                        }`}
+                    />
+                </div>
+            </div>
         </div>
       </div>
 
