@@ -7,7 +7,81 @@ const getRandomInt = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-// Fix: Added missing generateFind100Problems function for Find100Game component
+// Định nghĩa các loại hình học cơ bản
+const SHAPE_TYPES = {
+  TRIANGLE: { id: 'tri', name: 'Tam giác', d: "M 50 10 L 90 90 L 10 90 Z" },
+  SQUARE: { id: 'sq', name: 'Vuông', d: "M 15 15 L 85 15 L 85 85 L 15 85 Z" },
+  RECT: { id: 'rect', name: 'Chữ nhật', d: "M 10 30 L 90 30 L 90 70 L 10 70 Z" },
+  CIRCLE: { id: 'cir', name: 'Tròn', d: "M 50 50 m -40 0 a 40 40 0 1 0 80 0 a 40 40 0 1 0 -80 0" }
+};
+
+const PUZZLE_TEMPLATES = [
+  {
+    name: "Thuyền buồm",
+    sources: [
+      { ...SHAPE_TYPES.TRIANGLE, color: '#3b82f6', instanceId: 's1' },
+      { ...SHAPE_TYPES.RECT, color: '#f59e0b', instanceId: 's2' }
+    ],
+    targets: [
+      { id: 't1', type: 'tri', requiredRot: 0, x: 40, y: 15, scale: 0.45, d: "M 40 15 L 60 15 L 50 55 Z" },
+      { id: 't2', type: 'rect', requiredRot: 0, x: 25, y: 55, scale: 0.5, d: "M 25 55 L 75 55 L 65 85 L 35 85 Z" }
+    ]
+  },
+  {
+    name: "Ngôi nhà nhỏ",
+    sources: [
+      { ...SHAPE_TYPES.TRIANGLE, color: '#ef4444', instanceId: 's1' },
+      { ...SHAPE_TYPES.SQUARE, color: '#10b981', instanceId: 's2' }
+    ],
+    targets: [
+      { id: 't1', type: 'tri', requiredRot: 0, x: 30, y: 15, scale: 0.4, d: "M 30 15 L 70 15 L 50 50 Z" },
+      { id: 't2', type: 'sq', requiredRot: 0, x: 30, y: 50, scale: 0.4, d: "M 30 50 L 70 50 L 70 90 L 30 90 Z" }
+    ]
+  },
+  {
+    name: "Tên lửa",
+    sources: [
+      { ...SHAPE_TYPES.TRIANGLE, color: '#ef4444', instanceId: 's1' },
+      { ...SHAPE_TYPES.RECT, color: '#3b82f6', instanceId: 's2' },
+      { ...SHAPE_TYPES.TRIANGLE, color: '#f59e0b', instanceId: 's3' }
+    ],
+    targets: [
+      { id: 't1', type: 'tri', requiredRot: 0, x: 45, y: 5, scale: 0.1, d: "M 45 5 L 55 5 L 50 15 Z" },
+      { id: 't2', type: 'rect', requiredRot: 90, x: 45, y: 15, scale: 0.4, d: "M 45 15 L 55 15 L 55 55 L 45 55 Z" },
+      { id: 't3', type: 'tri', requiredRot: 180, x: 45, y: 55, scale: 0.1, d: "M 50 55 L 55 65 L 45 65 Z" }
+    ]
+  },
+  {
+    name: "Cây thông",
+    sources: [
+      { ...SHAPE_TYPES.TRIANGLE, color: '#16a34a', instanceId: 's1' },
+      { ...SHAPE_TYPES.TRIANGLE, color: '#22c55e', instanceId: 's2' },
+      { ...SHAPE_TYPES.RECT, color: '#713f12', instanceId: 's3' }
+    ],
+    targets: [
+      { id: 't1', type: 'tri', requiredRot: 0, x: 40, y: 10, scale: 0.2, d: "M 40 10 L 60 10 L 50 35 Z" },
+      { id: 't2', type: 'tri', requiredRot: 0, x: 35, y: 30, scale: 0.3, d: "M 35 30 L 65 30 L 50 65 Z" },
+      { id: 't3', type: 'rect', requiredRot: 90, x: 46, y: 65, scale: 0.2, d: "M 46 65 L 54 65 L 54 85 L 46 85 Z" }
+    ]
+  }
+];
+
+export const generatePuzzleProblem = (): MathProblem => {
+  const template = PUZZLE_TEMPLATES[getRandomInt(0, PUZZLE_TEMPLATES.length - 1)];
+  return {
+    id: generateId(),
+    type: 'puzzle',
+    visualType: 'dissection',
+    question: `Bé hãy chọn hình bên trái, xoay cho đúng rồi lắp vào hình mẫu bên phải nhé!`,
+    answer: template.targets,
+    visualData: {
+      templateName: template.name,
+      sourceShapes: template.sources,
+      gridPieces: template.targets
+    }
+  };
+};
+
 export const generateFind100Problems = (count: number): MathProblem[] => {
   const problems: MathProblem[] = [];
   for (let i = 0; i < count; i++) {
@@ -19,7 +93,6 @@ export const generateFind100Problems = (count: number): MathProblem[] => {
     } else {
       a = getRandomInt(10, 90);
       b = getRandomInt(10, 90);
-      // Ensure it's not 100 if we want an incorrect one
       if (a + b === 100) b += getRandomInt(1, 5);
     }
     problems.push({ 
@@ -31,66 +104,6 @@ export const generateFind100Problems = (count: number): MathProblem[] => {
     });
   }
   return problems;
-};
-
-// Cấu hình các mảnh ghép cơ bản (theo chương trình lớp 2)
-const SOURCE_SHAPES_POOL = {
-  tri_red: { id: 'tri_red', color: '#ef4444', d: "M 50 5 L 95 95 L 5 95 Z", name: "Tam giác đỏ" },
-  tri_blue: { id: 'tri_blue', color: '#3b82f6', d: "M 50 5 L 95 95 L 5 95 Z", name: "Tam giác xanh" },
-  sq_orange: { id: 'sq_orange', color: '#f59e0b', d: "M 10 10 L 90 10 L 90 90 L 10 90 Z", name: "Vuông cam" },
-  rect_purple: { id: 'rect_purple', color: '#a855f7', d: "M 10 30 L 90 30 L 90 70 L 10 70 Z", name: "Chữ nhật tím" },
-  circle_green: { id: 'circle_green', color: '#22c55e', d: "M 50 50 m -45 0 a 45 45 0 1 0 90 0 a 45 45 0 1 0 -90 0", name: "Tròn xanh" }
-};
-
-const PUZZLE_TEMPLATES = [
-  {
-    name: "Thuyền buồm",
-    targets: [
-      { id: 't1', requiredId: 'tri_blue', rot: 0, x: 35, y: 10, scale: 0.4, d: "M 35 10 L 55 10 L 55 50 Z" },
-      { id: 't2', requiredId: 'rect_purple', rot: 0, x: 25, y: 50, scale: 0.5, d: "M 25 50 L 75 50 L 65 70 L 35 70 Z" }
-    ],
-    sources: [SOURCE_SHAPES_POOL.tri_blue, SOURCE_SHAPES_POOL.rect_purple]
-  },
-  {
-    name: "Ngôi nhà",
-    targets: [
-      { id: 't1', requiredId: 'tri_red', rot: 0, x: 30, y: 10, scale: 0.4, d: "M 30 10 L 70 10 L 50 45 Z" },
-      { id: 't2', requiredId: 'sq_orange', rot: 0, x: 30, y: 45, scale: 0.4, d: "M 30 45 L 70 45 L 70 85 L 30 85 Z" }
-    ],
-    sources: [SOURCE_SHAPES_POOL.tri_red, SOURCE_SHAPES_POOL.sq_orange]
-  },
-  {
-    name: "Cây thông",
-    targets: [
-      { id: 't1', requiredId: 'tri_red', rot: 180, x: 35, y: 5, scale: 0.3, d: "M 40 5 L 60 5 L 50 25 Z" },
-      { id: 't2', requiredId: 'tri_blue', rot: 0, x: 30, y: 20, scale: 0.4, d: "M 35 20 L 65 20 L 50 50 Z" },
-      { id: 't3', requiredId: 'rect_purple', rot: 90, x: 45, y: 50, scale: 0.2, d: "M 45 50 L 55 50 L 55 80 L 45 80 Z" }
-    ],
-    sources: [SOURCE_SHAPES_POOL.tri_red, SOURCE_SHAPES_POOL.tri_blue, SOURCE_SHAPES_POOL.rect_purple]
-  },
-  {
-    name: "Mũi tên",
-    targets: [
-      { id: 't1', requiredId: 'sq_orange', rot: 0, x: 10, y: 35, scale: 0.3, d: "M 10 35 L 50 35 L 50 65 L 10 65 Z" },
-      { id: 't2', requiredId: 'tri_red', rot: 90, x: 50, y: 20, scale: 0.6, d: "M 50 20 L 90 50 L 50 80 Z" }
-    ],
-    sources: [SOURCE_SHAPES_POOL.sq_orange, SOURCE_SHAPES_POOL.tri_red]
-  }
-];
-
-export const generatePuzzleProblem = (): MathProblem => {
-  const template = PUZZLE_TEMPLATES[getRandomInt(0, PUZZLE_TEMPLATES.length - 1)];
-  return {
-    id: generateId(),
-    type: 'puzzle',
-    visualType: 'dissection',
-    question: `Bé hãy xếp các mảnh ghép để tạo thành "${template.name}" nhé!`,
-    answer: template.targets,
-    visualData: {
-      sourceShapes: template.sources,
-      gridPieces: template.targets
-    }
-  };
 };
 
 export const generateVerticalProblems = (count: number): MathProblem[] => {
@@ -191,7 +204,7 @@ export const generateChallengeProblem = (): MathProblem => {
 };
 
 export const generateIdentifyShapesProblem = (): MathProblem => {
-  const target = { type: 'triangle', name: 'hình tam giác', d: "M 50 15 L 85 85 L 15 85 Z" };
+  const target = { type: 'tri', name: 'hình tam giác', d: "M 50 15 L 85 85 L 15 85 Z" };
   return {
     id: generateId(),
     type: 'geometry',
