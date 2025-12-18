@@ -9,7 +9,7 @@ interface Props {
   showResult: boolean;
 }
 
-interface PieceState {
+interface PlacedPiece {
   sourceId: string;
   rotation: number;
 }
@@ -19,16 +19,19 @@ const PuzzleMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
     ? problem.visualData 
     : {};
     
-  const placedPieces: Record<string, PieceState> = problem.userAnswer ? JSON.parse(problem.userAnswer) : {};
+  const placedPieces: Record<string, PlacedPiece> = problem.userAnswer ? JSON.parse(problem.userAnswer) : {};
   
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+  const [currentRotation, setCurrentRotation] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Theo dõi vị trí chuột/tay khi đang cầm mảnh ghép
   useEffect(() => {
     const handleMove = (e: MouseEvent | TouchEvent) => {
       if (!activeSourceId) return;
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const clientX = 'touches' in e ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
       setMousePos({ x: clientX, y: clientY });
     };
     window.addEventListener('mousemove', handleMove);
@@ -39,188 +42,188 @@ const PuzzleMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
     };
   }, [activeSourceId]);
 
-  const handleSourceClick = (id: string, e: React.MouseEvent) => {
+  const handleSourceClick = (id: string, e: React.MouseEvent | React.TouchEvent) => {
     if (showResult) return;
     audioService.play('click');
+    
     if (activeSourceId === id) {
       setActiveSourceId(null);
     } else {
       setActiveSourceId(id);
-      setMousePos({ x: e.clientX, y: e.clientY });
+      setCurrentRotation(0); // Reset rotation khi chọn mảnh mới
+      const clientX = 'touches' in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.MouseEvent).clientX;
+      const clientY = 'touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY;
+      setMousePos({ x: clientX, y: clientY });
     }
+  };
+
+  const rotatePiece = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (showResult || !activeSourceId) return;
+    audioService.play('click');
+    setCurrentRotation(prev => (prev + 90) % 360);
   };
 
   const handleTargetClick = (targetId: string) => {
     if (showResult) return;
     
-    // Nếu đang cầm mảnh trên tay -> lắp vào ô này
-    if (activeSourceId) {
-      audioService.play('correct');
-      const newPlaced = { ...placedPieces };
-      
-      // Xóa mảnh này khỏi bất kỳ ô nào khác nếu nó đã được đặt
-      Object.keys(newPlaced).forEach(key => {
-        if (newPlaced[key].sourceId === activeSourceId) delete newPlaced[key];
-      });
+    const targetConfig = gridPieces.find((p: any) => p.id === targetId);
+    if (!targetConfig) return;
 
-      newPlaced[targetId] = {
-        sourceId: activeSourceId,
-        rotation: 0 // Bắt đầu từ 0 độ khi mới lắp vào
-      };
-      
-      onUpdate(JSON.stringify(newPlaced));
-      setActiveSourceId(null);
+    if (activeSourceId) {
+      // KIỂM TRA CHÍNH XÁC: Phải đúng loại hình VÀ đúng góc xoay
+      const normCurrentRot = currentRotation % 360;
+      const normTargetRot = targetConfig.rot % 360;
+
+      if (activeSourceId === targetConfig.requiredId && normCurrentRot === normTargetRot) {
+        audioService.play('correct');
+        const newPlaced = { ...placedPieces };
+        newPlaced[targetId] = { sourceId: activeSourceId, rotation: currentRotation };
+        onUpdate(JSON.stringify(newPlaced));
+        setActiveSourceId(null);
+      } else {
+        audioService.play('wrong');
+        // Không khớp thì không đặt vào được
+      }
     } else if (placedPieces[targetId]) {
-      // Nếu không cầm gì mà nhấn vào ô đã có mảnh -> Xoay mảnh đó (90 độ mỗi lần)
+      // Cho phép gỡ ra nếu đang đặt rồi mà nhấn lại
       audioService.play('click');
       const newPlaced = { ...placedPieces };
-      newPlaced[targetId].rotation = (newPlaced[targetId].rotation + 90) % 360;
+      delete newPlaced[targetId];
       onUpdate(JSON.stringify(newPlaced));
     }
   };
 
-  const checkPieceCorrect = (targetId: string) => {
-    const placed = placedPieces[targetId];
-    const correct = problem.answer[targetId];
-    if (!placed || !correct) return false;
-    return placed.sourceId === correct.sourceId && placed.rotation === correct.rotation;
-  };
-
-  const isFullCorrect = showResult && 
-    Object.keys(problem.answer).every(targetId => checkPieceCorrect(targetId)) &&
-    Object.keys(placedPieces).length === Object.keys(problem.answer).length;
+  const isAllCorrect = showResult && 
+    gridPieces.every((p: any) => placedPieces[p.id]?.sourceId === p.requiredId) &&
+    Object.keys(placedPieces).length === gridPieces.length;
 
   return (
-    <div className="bg-white p-6 sm:p-10 rounded-[40px] border-4 border-sky-100 shadow-2xl flex flex-col items-center w-full max-w-5xl mx-auto relative overflow-hidden select-none">
+    <div ref={containerRef} className="bg-white p-4 sm:p-8 rounded-[40px] border-4 border-sky-100 shadow-2xl flex flex-col items-center w-full max-w-5xl mx-auto relative select-none touch-none">
       
       <div className="text-center mb-8">
-          <h3 className="text-2xl font-black text-gray-800 mb-2">Bé Tập Xếp Hình Thông Minh</h3>
-          <p className="text-sky-500 font-bold text-sm bg-sky-50 px-4 py-2 rounded-full inline-block">
-            {problem.question}
-          </p>
+          <h3 className="text-2xl font-black text-gray-800 mb-2 uppercase tracking-tighter">Bé tập xếp hình thông minh</h3>
+          <div className="bg-yellow-50 text-yellow-700 px-6 py-2 rounded-full border-2 border-yellow-200 text-sm font-bold flex items-center gap-2 animate-pulse">
+            💡 Mẹo: Bé hãy xoay mảnh ghép bên trái cho đúng hướng rồi hãy lắp vào hình bên phải nhé!
+          </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full">
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-8 w-full">
         
-        {/* Phần A: Nguồn mảnh ghép - Đơn giản hơn */}
-        <div className="flex flex-row lg:flex-col items-center justify-center bg-gray-50 p-6 rounded-[32px] border-2 border-dashed border-gray-200 w-full lg:w-48 gap-8">
+        {/* VÙNG BÊN TRÁI: Kho mảnh ghép */}
+        <div className="flex flex-row lg:flex-col items-center justify-center bg-gray-50 p-6 rounded-[32px] border-2 border-dashed border-gray-200 w-full lg:w-48 gap-4 shadow-inner">
+          <p className="w-full text-center text-[10px] font-black text-gray-400 uppercase tracking-widest hidden lg:block">Mảnh ghép</p>
           {sourceShapes.map((s: any) => {
               const isPicked = activeSourceId === s.id;
-              const isPlaced = Object.values(placedPieces).some(p => p.sourceId === s.id);
-
               return (
                   <div 
                       key={s.id} 
                       onClick={(e) => handleSourceClick(s.id, e)}
-                      className={`relative cursor-pointer transition-all duration-300 transform
-                          ${isPlaced && !isPicked ? 'opacity-20 grayscale scale-75' : 'hover:scale-110 active:scale-95'}
-                          ${isPicked ? 'scale-125 z-20' : ''}
+                      className={`group relative p-3 rounded-2xl border-4 transition-all duration-300 cursor-pointer bg-white
+                        ${isPicked ? 'border-sky-500 shadow-xl -translate-y-1 scale-110 z-20' : 'border-transparent hover:border-sky-200'}
                       `}
                   >
-                      <div className={`p-3 rounded-2xl border-4 ${isPicked ? 'border-sky-500 bg-white shadow-xl' : 'border-transparent'}`}>
-                          <svg viewBox="0 0 100 100" className="w-16 h-16 sm:w-20 sm:h-20 overflow-visible drop-shadow-md">
-                              <path d={s.d} fill={s.color} stroke="#334155" strokeWidth="4" />
-                          </svg>
-                      </div>
+                      <svg viewBox="0 0 100 100" className="w-12 h-12 sm:w-16 sm:h-16 overflow-visible drop-shadow-sm">
+                          <path 
+                            d={s.d} 
+                            fill={s.color} 
+                            stroke="#334155" 
+                            strokeWidth="4" 
+                            transform={`rotate(${isPicked ? currentRotation : 0}, 50, 50)`}
+                            className="transition-transform duration-200"
+                          />
+                      </svg>
+                      
                       {isPicked && (
-                        <div className="absolute -top-2 -right-2 bg-sky-500 text-white p-1 rounded-full animate-bounce">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
+                        <button 
+                          onClick={rotatePiece}
+                          className="absolute -top-3 -right-3 bg-sky-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white hover:bg-sky-700 active:rotate-90 transition-transform"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        </button>
                       )}
+                      
+                      <div className="text-[10px] font-black text-gray-400 mt-2 text-center uppercase">{s.name}</div>
                   </div>
               )
           })}
         </div>
 
-        {/* Phần B: Lưới lắp ghép - Có bóng mờ gợi ý */}
-        <div className="relative w-full max-w-[400px]">
-          <div className="bg-white rounded-[40px] border-8 border-gray-100 overflow-hidden shadow-xl p-4">
-             <svg viewBox="0 0 120 120" className="w-full h-full">
-                {/* 1. Render các ô trống và bóng mờ gợi ý */}
-                {gridPieces.map((piece: any) => {
-                    const placed = placedPieces[piece.id];
-                    const targetInfo = problem.answer[piece.id];
-                    const sourceShape = targetInfo ? sourceShapes.find((s:any) => s.id === targetInfo.sourceId) : null;
-                    
-                    return (
-                        <g key={piece.id} onClick={() => handleTargetClick(piece.id)} className="cursor-pointer group">
-                            {/* Nền ô */}
-                            <path 
-                                d={piece.d} 
-                                fill={piece.hintColor || "white"} 
-                                fillOpacity={0.15}
-                                stroke={activeSourceId ? "#bae6fd" : "#f1f5f9"} 
-                                strokeWidth="0.5" 
-                            />
-                            
-                            {/* BÓNG MỜ GỢI Ý (Rất quan trọng cho trẻ lớp 2) */}
-                            {sourceShape && !placed && (
-                                <path 
-                                    d={sourceShape.d} 
-                                    fill={sourceShape.color} 
-                                    fillOpacity={0.1}
-                                    stroke={sourceShape.color}
-                                    strokeWidth="1"
-                                    strokeDasharray="2 1"
-                                    transform={`translate(${piece.id === "5" ? "20,20" : "40,60"}) scale(0.4) rotate(${targetInfo.rotation}, 50, 50)`}
-                                    className="pointer-events-none"
-                                />
-                            )}
+        {/* VÙNG BÊN PHẢI: Hình mẫu và target */}
+        <div className="relative flex-1 bg-white rounded-[48px] border-8 border-gray-50 p-4 sm:p-8 shadow-xl max-w-[500px]">
+           <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm overflow-visible">
+              {/* Bóng mờ gợi ý (Hidden Outlines) */}
+              {gridPieces.map((p: any) => (
+                <path 
+                  key={`hint-${p.id}`}
+                  d={p.d} 
+                  fill="#f1f5f9" 
+                  stroke="#e2e8f0" 
+                  strokeWidth="0.5" 
+                  strokeDasharray="2 2"
+                />
+              ))}
 
-                            {/* MẢNH ĐÃ ĐẶT VÀO */}
-                            {placed && (
-                                <g transform={`translate(${piece.id === "5" ? "20,20" : "40,60"}) scale(0.4)`}>
-                                  <g transform={`rotate(${placed.rotation}, 50, 50)`} className="transition-transform duration-300">
-                                      <path 
-                                          d={sourceShapes.find((s:any) => s.id === placed.sourceId).d} 
-                                          fill={sourceShapes.find((s:any) => s.id === placed.sourceId).color} 
-                                          stroke="#1e293b" 
-                                          strokeWidth="4" 
-                                          className={`${checkPieceCorrect(piece.id) ? 'drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'drop-shadow-lg'}`}
-                                      />
-                                  </g>
-                                </g>
-                            )}
-                            
-                            {/* Hiệu ứng hào quang khi đúng */}
-                            {checkPieceCorrect(piece.id) && (
-                                <circle cx={piece.id === "5" ? 40 : 60} cy={piece.id === "5" ? 40 : 80} r="3" fill="#22c55e" className="animate-pulse" />
-                            )}
-                        </g>
-                    )
-                })}
-             </svg>
-          </div>
-          
-          <div className="mt-6 flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2 text-sky-600 font-bold text-sm">
-                <div className="w-3 h-3 rounded-full bg-sky-500 animate-ping" />
-                <span>Mẹo: Nhấn vào mảnh đã lắp để xoay hình!</span>
-            </div>
-          </div>
+              {/* Ô mục tiêu nhận mảnh ghép */}
+              {gridPieces.map((p: any) => {
+                  const placed = placedPieces[p.id];
+                  const shapeData = sourceShapes.find((s:any) => s.id === p.requiredId);
+                  const isCorrect = showResult && placed?.sourceId === p.requiredId;
+
+                  return (
+                      <g key={p.id} onClick={() => handleTargetClick(p.id)} className="cursor-pointer group">
+                          {/* Vùng nhận cảm ứng (Target box) */}
+                          <rect 
+                            x={p.x - 2} y={p.y - 2} width="10" height="10" 
+                            fill="transparent" 
+                            className="group-hover:fill-sky-50 transition-colors"
+                          />
+                          
+                          {/* Mảnh đã lắp (nếu có) */}
+                          {placed && shapeData && (
+                              <g transform={`translate(${p.x}, ${p.y}) scale(${p.scale}) rotate(${placed.rotation}, 50, 50)`}>
+                                  <path 
+                                      d={shapeData.d} 
+                                      fill={shapeData.color} 
+                                      stroke={isCorrect ? "#16a34a" : "#1e293b"} 
+                                      strokeWidth="4" 
+                                      className="drop-shadow-lg"
+                                  />
+                              </g>
+                          )}
+                          
+                          {/* Điểm nhấn khi đang cầm mảnh đúng loại */}
+                          {activeSourceId === p.requiredId && !placed && (
+                              <circle cx={p.x + 5} cy={p.y + 5} r="2" fill="#0ea5e9" className="animate-ping" />
+                          )}
+                      </g>
+                  )
+              })}
+           </svg>
         </div>
       </div>
 
-      {/* Mảnh ghép "bay" theo chuột */}
+      {/* MẢNH GHÉP ĐANG CẦM (Theo chuột/tay) */}
       {activeSourceId && (
           <div 
             className="fixed pointer-events-none z-[9999]"
             style={{ left: mousePos.x, top: mousePos.y, transform: 'translate(-50%, -50%)' }}
           >
-              <svg viewBox="0 0 100 100" className="w-20 h-20 drop-shadow-2xl opacity-90">
+              <svg viewBox="0 0 100 100" className="w-16 h-16 sm:w-24 sm:h-24 drop-shadow-2xl opacity-90 transition-transform duration-200" style={{ transform: `rotate(${currentRotation}deg)` }}>
                   <path 
                     d={sourceShapes.find((s:any) => s.id === activeSourceId).d} 
                     fill={sourceShapes.find((s:any) => s.id === activeSourceId).color} 
-                    stroke="#3b82f6" 
-                    strokeWidth="6" 
+                    stroke="#0ea5e9" 
+                    strokeWidth="8" 
                   />
               </svg>
+              <div className="bg-sky-600 text-white text-[10px] font-black px-3 py-1 rounded-full text-center mt-2 shadow-lg">Lắp vào hình nhé!</div>
           </div>
       )}
 
       {showResult && (
-          <div className={`mt-8 p-6 rounded-[32px] font-black text-xl shadow-xl animate-fadeIn ${isFullCorrect ? 'bg-green-500 text-white' : 'bg-orange-400 text-white'}`}>
-              {isFullCorrect ? '🏆 Bé giỏi quá! Hình đã khớp hoàn toàn!' : '🧐 Bé hãy nhấn vào mảnh ghép để xoay cho đúng bóng mờ nhé!'}
+          <div className={`mt-10 p-6 rounded-[32px] font-black text-xl shadow-xl animate-fadeIn w-full text-center ${isAllCorrect ? 'bg-green-500 text-white' : 'bg-orange-400 text-white'}`}>
+              {isAllCorrect ? '🌟 Bé giỏi quá! Hình lắp thật là đẹp!' : '🧐 Bé hãy thử kiểm tra lại các mảnh ghép nhé!'}
           </div>
       )}
     </div>
