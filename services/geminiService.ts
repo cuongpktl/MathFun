@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { MathProblem } from "../types";
 
@@ -48,14 +49,21 @@ export const generateWordProblem = async (forcedOperator?: '+' | '-'): Promise<M
   try {
     const ai = new GoogleGenAI({ apiKey });
     
-    // Explicitly instruct the AI to use the forced operator
+    // Explicitly instruct the AI to use the forced operator and vary content
     const opInstruction = forcedOperator 
       ? `MUST use the ${forcedOperator === '+' ? 'Addition (+)' : 'Subtraction (-)'} operation.`
       : "Use either Addition (+) or Subtraction (-).";
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate a math word problem for a 2nd grade student in Vietnamese. Constraints: 1. ${opInstruction} 2. Numbers must be integers. 3. Subtraction: first number > second number. 4. All numbers and result <= 100. Contexts: candies, birds, toys, school items.`,
+      contents: `Generate a math word problem for a 2nd grade student in Vietnamese. 
+      Constraints: 
+      1. ${opInstruction} 
+      2. Numbers must be integers. 
+      3. Subtraction: first number > second number. 
+      4. All numbers and result <= 100. 
+      5. Use diverse contexts like: animals (rabbits, chickens), fruits (apples, oranges), school supplies, or farm situations. 
+      6. Make the story engaging and simple.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
