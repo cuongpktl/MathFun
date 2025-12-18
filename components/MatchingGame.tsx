@@ -19,6 +19,9 @@ const MatchingGame: React.FC = () => {
   
   const [solvedIds, setSolvedIds] = useState<string[]>([]);
   const [wrongMatch, setWrongMatch] = useState(false);
+  
+  // Trạng thái lưu kết quả trung gian cho từng chú chim
+  const [intermediateValues, setIntermediateValues] = useState<Record<string, string>>({});
 
   const initGame = () => {
     audioService.play('click');
@@ -29,6 +32,7 @@ const MatchingGame: React.FC = () => {
     setSelectedBirdId(null);
     setSelectedHouseId(null);
     setWrongMatch(false);
+    setIntermediateValues({});
   };
 
   useEffect(() => {
@@ -67,6 +71,10 @@ const MatchingGame: React.FC = () => {
       setSelectedHouseId(selectedHouseId === id ? null : id);
   };
 
+  const handleIntermediateChange = (birdId: string, val: string) => {
+      setIntermediateValues(prev => ({ ...prev, [birdId]: val }));
+  };
+
   const isComplete = birds.length > 0 && solvedIds.length === birds.length;
 
   return (
@@ -74,7 +82,7 @@ const MatchingGame: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-5 rounded-3xl shadow-sm border border-gray-100 gap-4">
         <div className="text-center sm:text-left">
             <h2 className="text-xl font-extrabold text-gray-800">Ghép Chim Về Tổ</h2>
-            <p className="text-gray-500 text-sm">Chọn chú chim rồi chọn ngôi nhà đúng nhé!</p>
+            <p className="text-gray-500 text-sm">Bé hãy tính từng bước dưới chú chim rồi chọn tổ nhé!</p>
         </div>
         <div className="flex items-center gap-3">
             {isComplete && (
@@ -89,27 +97,76 @@ const MatchingGame: React.FC = () => {
         </div>
       </div>
 
-      <div className="space-y-16 py-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
+      <div className="space-y-24 py-10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-20 sm:gap-x-8">
               {birds.map(bird => {
                   const isSolved = solvedIds.includes(bird.id);
                   const isSelected = selectedBirdId === bird.id;
                   const isWrong = wrongMatch && isSelected;
 
+                  const n1 = bird.numbers?.[0] || 0;
+                  const n2 = bird.numbers?.[1] || 0;
+                  const n3 = bird.numbers?.[2] || 0;
+                  const op1 = bird.operators?.[0] || '+';
+                  const op2 = bird.operators?.[1] || '+';
+                  const step1Target = op1 === '+' ? n1 + n2 : n1 - n2;
+                  
+                  const userStep1 = intermediateValues[bird.id] || '';
+                  const isStep1Correct = userStep1 !== '' && parseInt(userStep1) === step1Target;
+                  const isStep1Wrong = userStep1 !== '' && parseInt(userStep1) !== step1Target;
+
                   return (
                       <div 
                         key={bird.id}
-                        onClick={() => handleBirdClick(bird.id)}
-                        className={`flex flex-col items-center cursor-pointer transition-all duration-300 ${isSolved ? 'scale-0 opacity-0' : 'hover:-translate-y-2'}`}
+                        className={`flex flex-col items-center transition-all duration-300 ${isSolved ? 'scale-0 opacity-0 pointer-events-none' : ''}`}
                       >
-                          <div className={`p-2 sm:p-4 rounded-3xl border-4 w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center relative shadow-xl bg-white
-                              ${isSelected ? 'border-blue-500 bg-blue-50 ring-8 ring-blue-100' : 'border-sky-50'}
+                          {/* Card Chú Chim */}
+                          <div 
+                            onClick={() => handleBirdClick(bird.id)}
+                            className={`p-2 sm:p-4 rounded-3xl border-4 w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center relative shadow-xl bg-white cursor-pointer transition-all
+                              ${isSelected ? 'border-blue-500 bg-blue-50 ring-8 ring-blue-100 -translate-y-2' : 'border-sky-50 hover:border-sky-200'}
                               ${isWrong ? 'border-red-400 bg-red-50 animate-shake' : ''}
                           `}>
                               <BirdIcon className={`w-24 h-24 ${isSelected ? 'text-blue-500' : 'text-sky-400'}`} />
-                              <div className="absolute -bottom-5 bg-white border-2 border-sky-100 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-black text-gray-700 shadow-lg whitespace-nowrap">
-                                  {bird.numbers?.[0]} {bird.operators?.[0]} {bird.numbers?.[1]} {bird.operators?.[1]} {bird.numbers?.[2]}
+                              
+                              {/* Biểu thức chính */}
+                              <div className="absolute -bottom-5 bg-white border-2 border-sky-100 px-2 py-1.5 rounded-xl text-[11px] sm:text-xs font-black text-gray-700 shadow-lg whitespace-nowrap flex gap-1 items-center">
+                                  <span>{n1}</span>
+                                  <span className="text-blue-400">{op1}</span>
+                                  <span>{n2}</span>
+                                  <span className="text-blue-400">{op2}</span>
+                                  <span>{n3}</span>
                               </div>
+                          </div>
+
+                          {/* Sơ đồ tính trung gian (Chữ V) */}
+                          <div className="w-full relative h-16 mt-6 flex justify-center">
+                               {/* Ngoặc chữ V */}
+                               <div className="absolute top-0 left-[20%] right-[55%] h-5 border-l-2 border-b-2 border-r-2 border-blue-200 rounded-b-lg"></div>
+                               
+                               {/* Ô nhập trung gian */}
+                               <div className="absolute top-5 left-[37%] -translate-x-1/2">
+                                    <input 
+                                        type="number"
+                                        inputMode="numeric"
+                                        placeholder="..."
+                                        value={userStep1}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={(e) => handleIntermediateChange(bird.id, e.target.value)}
+                                        className={`w-10 h-8 text-center text-[10px] font-black rounded-lg border-2 outline-none transition-all ${
+                                            isStep1Correct ? 'border-green-400 bg-green-50 text-green-600' :
+                                            isStep1Wrong ? 'border-orange-300 bg-orange-50 text-orange-600' :
+                                            'border-blue-50 bg-white focus:border-blue-200'
+                                        }`}
+                                    />
+                               </div>
+
+                               {/* Mũi tên và số còn lại */}
+                               <div className="absolute top-6 left-[50%] text-[10px] text-blue-200 font-bold">→</div>
+                               <div className="absolute top-5 left-[70%] -translate-x-1/2 flex items-center gap-1 text-[10px] font-black text-gray-400">
+                                   <span>{op2}</span>
+                                   <span className="bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">{n3}</span>
+                               </div>
                           </div>
                       </div>
                   )
@@ -125,7 +182,7 @@ const MatchingGame: React.FC = () => {
                     <div 
                         key={house.id}
                         onClick={() => handleHouseClick(house.id)}
-                        className={`flex flex-col items-center cursor-pointer transition-all duration-300 ${isSolved ? 'scale-0 opacity-0' : ''}`}
+                        className={`flex flex-col items-center cursor-pointer transition-all duration-300 ${isSolved ? 'scale-0 opacity-0 pointer-events-none' : ''}`}
                       >
                           <div className={`w-32 h-32 sm:w-40 sm:h-40 flex flex-col items-center justify-end relative
                                ${isTargetForWrong ? 'animate-shake' : 'hover:scale-105'}
