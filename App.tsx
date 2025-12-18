@@ -10,11 +10,11 @@ import {
   generateMeasurementProblems, 
   generateGeometryProblems,
   generatePatternProblems,
-  generateIdentifyShapesProblem,
   generateChallengeProblem,
   generatePuzzleProblem,
   generateComparisonProblems,
-  generateDmProblems
+  generateDmProblems,
+  generateMixedProblems
 } from './services/mathUtils';
 import VerticalMath from './components/VerticalMath';
 import ExpressionMath from './components/ExpressionMath';
@@ -46,9 +46,9 @@ import {
 } from './components/icons';
 
 const TABS: TabItem[] = [
+  { id: 'practice', label: 'Luyện Tập', icon: <StarIcon />, color: 'bg-orange-400' },
   { id: 'word', label: 'Bài Toán', icon: <BookOpenIcon />, color: 'bg-yellow-500' },
   { id: 'dm', label: 'Đề-xi-mét', icon: <RulerIcon />, color: 'bg-green-600' },
-  { id: 'practice', label: 'Luyện Tập', icon: <StarIcon />, color: 'bg-orange-400' },
   { id: 'pattern', label: 'Quy Luật', icon: <PatternIcon />, color: 'bg-teal-600' },
   { id: 'compare', label: 'So Sánh', icon: <CompareIcon />, color: 'bg-indigo-600' },
   { id: 'geometry', label: 'Hình Học', icon: <ShapesIcon />, color: 'bg-teal-500' },
@@ -58,17 +58,19 @@ const TABS: TabItem[] = [
   { id: 'cards', label: 'Thẻ Số', icon: <GridIcon />, color: 'bg-indigo-500' },
   { id: 'expression', label: 'Biểu Thức', icon: <CalculatorIcon />, color: 'bg-purple-500' },
   { id: 'game', label: 'Tìm 100', icon: <CheckCircleIcon />, color: 'bg-green-500' },
-  { id: 'challenge', label: 'Thử Thách', icon: <StarIcon fill="white" />, color: 'bg-rose-500' },
+  { id: 'challenge', label: 'Tìm hình', icon: <StarIcon fill="white" />, color: 'bg-rose-500' },
   { id: 'puzzle', label: 'Xếp Hình', icon: <GridIcon />, color: 'bg-sky-500' },
 ];
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('word');
+  const [activeTab, setActiveTab] = useState('practice');
   const [problems, setProblems] = useState<MathProblem[]>([]);
   const [showResult, setShowResult] = useState(false);
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     setShowResult(false);
+    setScore(0);
     setProblems([]); 
     refreshData();
   }, [activeTab]);
@@ -82,7 +84,7 @@ const App: React.FC = () => {
     else if (activeTab === 'pattern') setProblems(generatePatternProblems(4));
     else if (activeTab === 'compare') setProblems(generateComparisonProblems(5));
     else if (activeTab === 'dm') setProblems(generateDmProblems(10));
-    else if (activeTab === 'practice') setProblems([generateIdentifyShapesProblem()]);
+    else if (activeTab === 'practice') setProblems(generateMixedProblems(10));
     else if (activeTab === 'challenge') setProblems([generateChallengeProblem()]);
     else if (activeTab === 'puzzle') setProblems([generatePuzzleProblem()]);
     else setProblems([]);
@@ -95,6 +97,7 @@ const App: React.FC = () => {
   const handleRefresh = () => {
     audioService.play('click');
     setShowResult(false);
+    setScore(0);
     refreshData();
   };
 
@@ -103,40 +106,45 @@ const App: React.FC = () => {
     setActiveTab(id);
   };
 
+  const isProblemCorrect = (p: MathProblem) => {
+    if (p.type === 'geometry' && p.visualType === 'identify_shape') {
+      const userSelected = p.userAnswer ? JSON.parse(p.userAnswer) : [];
+      const targetIds = p.visualData.shapes.filter((s: any) => s.type === p.visualData.targetId).map((s: any) => s.id);
+      return targetIds.length === userSelected.length && targetIds.every((id: string) => userSelected.includes(id));
+    }
+    if (p.type === 'puzzle') {
+      const placedPieces = p.userAnswer ? JSON.parse(p.userAnswer) : {};
+      const targets = p.answer as any[];
+      if (Object.keys(placedPieces).length !== targets.length) return false;
+      return targets.every(t => {
+          const placed = placedPieces[t.id];
+          return placed && (placed.rotation % 360) === (t.targetRot % 360);
+      });
+    }
+    if (p.type === 'challenge') {
+        return p.userAnswer === p.answer;
+    }
+    if (p.type === 'pattern') {
+        const userAnswers = p.userAnswer ? JSON.parse(p.userAnswer) : {};
+        const hiddenCells = p.visualData.hiddenCells as any[];
+        return hiddenCells.every(h => userAnswers[`${h.r}-${h.c}`] === h.target);
+    }
+    if (p.type === 'comparison') {
+        return p.userAnswer === p.answer;
+    }
+    return parseInt(p.userAnswer || '') === p.answer;
+  };
+
   const checkResults = () => {
     if (showResult) {
       setShowResult(false);
       return;
     }
 
-    const allCorrect = problems.every(p => {
-      if (p.type === 'geometry' && p.visualType === 'identify_shape') {
-        const userSelected = p.userAnswer ? JSON.parse(p.userAnswer) : [];
-        const targetIds = p.visualData.shapes.filter((s: any) => s.type === p.visualData.targetId).map((s: any) => s.id);
-        return targetIds.length === userSelected.length && targetIds.every((id: string) => userSelected.includes(id));
-      }
-      if (p.type === 'puzzle') {
-        const placedPieces = p.userAnswer ? JSON.parse(p.userAnswer) : {};
-        const correctAnswers = p.answer as Record<string, any>;
-        const targetKeys = Object.keys(correctAnswers);
-        return targetKeys.every(targetId => {
-            const placed = placedPieces[targetId];
-            const correct = correctAnswers[targetId];
-            return placed && placed.sourceId === correct.sourceId && placed.rotation === correct.rotation;
-        }) && Object.keys(placedPieces).length === targetKeys.length;
-      }
-      if (p.type === 'challenge') {
-          return p.userAnswer === p.answer;
-      }
-      if (p.type === 'pattern') {
-          const userAnswers = p.userAnswer ? JSON.parse(p.userAnswer) : {};
-          const hiddenCells = p.visualData.hiddenCells as any[];
-          return hiddenCells.every(h => userAnswers[`${h.r}-${h.c}`] === h.target);
-      }
-      return parseInt(p.userAnswer || '') === p.answer;
-    });
+    const correctCount = problems.filter(isProblemCorrect).length;
+    setScore(correctCount);
 
-    if (allCorrect) {
+    if (correctCount === problems.length && problems.length > 0) {
       audioService.play('success');
       confetti({
         particleCount: 150,
@@ -145,7 +153,7 @@ const App: React.FC = () => {
         colors: ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6']
       });
     } else {
-      audioService.play('wrong');
+      audioService.play(correctCount > problems.length / 2 ? 'correct' : 'wrong');
     }
 
     setShowResult(true);
@@ -156,44 +164,45 @@ const App: React.FC = () => {
     if (activeTab === 'game') return <Find100Game />;
     if (activeTab === 'matching') return <MatchingGame />;
 
-    const isVertical = activeTab === 'vertical';
-    const isExpression = activeTab === 'expression';
-    const isCompare = activeTab === 'compare';
-    const isDm = activeTab === 'dm';
+    const isFullWidth = activeTab === 'challenge' || activeTab === 'puzzle';
     
     return (
-      <div className="max-w-4xl mx-auto animate-fadeIn px-2 sm:px-0">
-        <div className={`grid grid-cols-1 ${isVertical || isExpression || isCompare || isDm ? 'sm:grid-cols-2' : ''} gap-4 sm:gap-6`}>
-            {problems.map(p => {
-                if (activeTab === 'cards') return <FillBlankMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (activeTab === 'measurement') return <MeasurementMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (activeTab === 'geometry' || activeTab === 'practice') return <GeometryMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (activeTab === 'pattern') return <PatternMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (activeTab === 'challenge') return <ChallengeMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (activeTab === 'puzzle') return <PuzzleMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (activeTab === 'compare') return <ComparisonMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (activeTab === 'dm') return <DmMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (isVertical) return <VerticalMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                return (
-                    <div key={p.id} className="sm:col-span-2">
-                        <ExpressionMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />
+      <div className="max-w-4xl mx-auto animate-fadeIn px-2 sm:px-0 relative">
+        <div className={`flex flex-col gap-8 sm:gap-12`}>
+            {problems.map((p, index) => (
+                <div key={p.id} className="relative pt-8 sm:pt-10">
+                    <div className="absolute top-0 left-0 bg-blue-600 text-white px-5 py-1.5 rounded-br-2xl rounded-tl-xl font-black text-sm shadow-md z-10 flex items-center gap-2">
+                        <span className="opacity-70">#</span> Câu {index + 1}
                     </div>
-                );
-            })}
+                    
+                    <div className={`${isFullWidth ? 'w-full' : 'bg-white rounded-[32px] p-2 sm:p-4'}`}>
+                        {p.type === 'fill_blank' && <FillBlankMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.type === 'measurement' && p.unit !== 'dm' && <MeasurementMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.type === 'geometry' && <GeometryMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.type === 'pattern' && <PatternMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.type === 'challenge' && <ChallengeMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.type === 'puzzle' && <PuzzleMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.type === 'comparison' && <ComparisonMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.unit === 'dm' && <DmMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.type === 'vertical' && <VerticalMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                        {p.type === 'expression' && <ExpressionMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
+                    </div>
+                </div>
+            ))}
         </div>
         
         {problems.length > 0 && (
-          <div className="mt-10 flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-4 px-4 pb-10">
+          <div className="mt-12 flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-4 px-4 pb-10">
               <button 
                   onClick={handleRefresh}
-                  className="px-6 py-4 sm:py-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-blue-300 text-gray-700 font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
+                  className="px-6 py-4 sm:py-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-blue-300 text-gray-700 font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
               >
                   <RefreshIcon />
                   Làm Đề Khác
               </button>
               <button 
                   onClick={checkResults}
-                  className={`px-8 py-4 sm:py-3 rounded-2xl font-bold shadow-lg transform transition-all active:scale-95 text-white ${showResult ? 'bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  className={`px-12 py-4 sm:py-3 rounded-2xl font-black shadow-lg transform transition-all active:scale-95 text-white text-lg ${showResult ? 'bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
                   {showResult ? 'Làm Lại' : 'Nộp Bài'}
               </button>
@@ -207,16 +216,29 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#f8fafc] pb-10 flex flex-col">
       <header className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div className="flex flex-col sm:flex-row sm:items-baseline">
-                <h1 className="text-xl md:text-2xl font-black text-blue-600 uppercase tracking-tighter whitespace-nowrap">
-                    Math<span className="text-yellow-500">Fun</span>
-                </h1>
-                <span className="sm:ml-2 text-[10px] md:text-xs font-black text-gray-500 normal-case italic">
-                    Quang Khải - 2A7
-                </span>
+            <div className="flex items-center gap-4 sm:gap-6 relative">
+                <div className="flex flex-col sm:flex-row sm:items-baseline">
+                    <h1 className="text-xl md:text-2xl font-black text-blue-600 uppercase tracking-tighter whitespace-nowrap">
+                        Math<span className="text-yellow-500">Fun</span>
+                    </h1>
+                    <span className="sm:ml-2 text-[10px] md:text-xs font-black text-gray-500 normal-case italic">
+                        Quang Khải - 2A7
+                    </span>
+                </div>
+
+                {/* Vòng tròn điểm số hiển thị ngay cạnh tên khi nộp bài */}
+                {showResult && problems.length > 0 && (
+                  <div className="animate-bounce-short">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 bg-white border-4 border-blue-600 rounded-full shadow-xl flex flex-col items-center justify-center">
+                      <span className="text-[10px] font-black text-gray-400 uppercase leading-none">Điểm</span>
+                      <span className="text-lg sm:text-2xl font-black text-red-600">{score}/{problems.length}</span>
+                    </div>
+                  </div>
+                )}
             </div>
+            
             <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
-                Học kỳ I
+                Lớp 2 - Học kỳ I
             </div>
         </div>
         

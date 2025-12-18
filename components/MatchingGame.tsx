@@ -20,7 +20,6 @@ const MatchingGame: React.FC = () => {
   const [solvedIds, setSolvedIds] = useState<string[]>([]);
   const [wrongMatch, setWrongMatch] = useState(false);
   
-  // Trạng thái lưu kết quả trung gian cho từng chú chim
   const [intermediateValues, setIntermediateValues] = useState<Record<string, string>>({});
 
   const initGame = () => {
@@ -78,7 +77,17 @@ const MatchingGame: React.FC = () => {
   const isComplete = birds.length > 0 && solvedIds.length === birds.length;
 
   return (
-    <div className="max-w-4xl mx-auto px-2">
+    <div className="max-w-4xl mx-auto px-2 relative">
+      {/* Vòng tròn điểm số đồng nhất: Điểm màu đỏ và To hơn */}
+      {birds.length > 0 && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 sm:static sm:translate-x-0 sm:mb-4 z-[100] animate-fadeIn">
+          <div className="w-20 h-20 sm:w-28 sm:h-28 bg-white border-4 border-orange-500 rounded-full shadow-2xl flex flex-col items-center justify-center mx-auto">
+            <span className="text-[10px] font-black text-gray-400 uppercase leading-none">Điểm</span>
+            <span className="text-xl sm:text-3xl font-black text-red-600">{solvedIds.length}/{birds.length}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-5 rounded-3xl shadow-sm border border-gray-100 gap-4">
         <div className="text-center sm:text-left">
             <h2 className="text-xl font-extrabold text-gray-800">Ghép Chim Về Tổ</h2>
@@ -120,7 +129,6 @@ const MatchingGame: React.FC = () => {
                         key={bird.id}
                         className={`flex flex-col items-center transition-all duration-300 ${isSolved ? 'scale-0 opacity-0 pointer-events-none' : ''}`}
                       >
-                          {/* Card Chú Chim */}
                           <div 
                             onClick={() => handleBirdClick(bird.id)}
                             className={`p-2 sm:p-4 rounded-3xl border-4 w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center relative shadow-xl bg-white cursor-pointer transition-all
@@ -128,8 +136,6 @@ const MatchingGame: React.FC = () => {
                               ${isWrong ? 'border-red-400 bg-red-50 animate-shake' : ''}
                           `}>
                               <BirdIcon className={`w-24 h-24 ${isSelected ? 'text-blue-500' : 'text-sky-400'}`} />
-                              
-                              {/* Biểu thức chính */}
                               <div className="absolute -bottom-5 bg-white border-2 border-sky-100 px-2 py-1.5 rounded-xl text-[11px] sm:text-xs font-black text-gray-700 shadow-lg whitespace-nowrap flex gap-1 items-center">
                                   <span>{n1}</span>
                                   <span className="text-blue-400">{op1}</span>
@@ -139,12 +145,8 @@ const MatchingGame: React.FC = () => {
                               </div>
                           </div>
 
-                          {/* Sơ đồ tính trung gian (Chữ V) - Đã căn chỉnh lệch sang phải hơn */}
                           <div className="w-full relative h-16 mt-6 flex justify-center overflow-visible">
-                               {/* Ngoặc chữ V - Căn chỉnh chính xác dưới n1 + n2 */}
                                <div className="absolute top-0 left-[26%] right-[48%] h-5 border-l-2 border-b-2 border-r-2 border-blue-200 rounded-b-lg"></div>
-                               
-                               {/* Ô nhập trung gian - Nằm dưới ngoặc chữ V */}
                                <div className="absolute top-5 left-[42%] -translate-x-1/2">
                                     <input 
                                         type="number"
@@ -160,8 +162,6 @@ const MatchingGame: React.FC = () => {
                                         }`}
                                     />
                                </div>
-
-                               {/* Mũi tên và số còn lại - Dịch sang phải để thông thoáng */}
                                <div className="absolute top-6 left-[58%] text-[10px] text-blue-200 font-bold opacity-60">→</div>
                                <div className="absolute top-5 left-[78%] -translate-x-1/2 flex items-center gap-1 text-[10px] font-black text-gray-400">
                                    <span className="text-blue-300">{op2}</span>

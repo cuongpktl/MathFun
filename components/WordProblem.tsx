@@ -18,16 +18,10 @@ const WordProblem: React.FC = () => {
     setInputs(['', '']);
     
     try {
-      // Sinh bài toán thứ nhất (ngẫu nhiên)
       const p1 = await generateWordProblem();
-      
-      // Xác định phép tính đối lập cho bài toán thứ hai
       const op1 = p1.operators?.[0] || '+';
       const op2 = op1 === '+' ? '-' : '+';
-      
-      // Sinh bài toán thứ hai với phép tính ép buộc và ngữ cảnh khác
       const p2 = await generateWordProblem(op2 as '+' | '-');
-      
       setProblems([p1, p2]);
     } catch (error) {
       console.error("Failed to load problems", error);
@@ -61,7 +55,6 @@ const WordProblem: React.FC = () => {
     newInputs[index] = value;
     setInputs(newInputs);
     
-    // Nếu đang có trạng thái sai, reset về idle khi trẻ nhập lại
     if (statuses[index] === 'wrong') {
       const newStatuses = [...statuses];
       newStatuses[index] = 'idle';
@@ -69,8 +62,20 @@ const WordProblem: React.FC = () => {
     }
   };
 
+  const correctCount = statuses.filter(s => s === 'correct').length;
+
   return (
-    <div className="max-w-3xl mx-auto w-full space-y-8 pb-10">
+    <div className="max-w-3xl mx-auto w-full space-y-8 pb-10 relative">
+      {/* Vòng tròn điểm số đồng nhất: To và điểm màu đỏ */}
+      {!loading && problems.length > 0 && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 sm:static sm:translate-x-0 sm:mb-4 z-[100] sm:z-auto animate-fadeIn">
+          <div className="w-20 h-20 sm:w-28 sm:h-28 bg-white border-4 border-yellow-500 rounded-full shadow-2xl flex flex-col items-center justify-center mx-auto">
+            <span className="text-[10px] font-black text-gray-400 uppercase leading-none">Điểm</span>
+            <span className="text-xl sm:text-3xl font-black text-red-600">{correctCount}/{problems.length}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-yellow-100">
         <div>
           <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
@@ -151,12 +156,6 @@ const WordProblem: React.FC = () => {
 
                 {statuses[index] === 'wrong' && (
                   <p className="mt-4 text-red-500 font-bold text-center">Bé hãy đọc kỹ và tính lại nhé! 💪</p>
-                )}
-                
-                {statuses[index] === 'correct' && (
-                  <div className="mt-4 text-green-600 font-black text-center animate-bounce-short">
-                    🌟 Tuyệt vời! Bé giải đúng rồi!
-                  </div>
                 )}
               </div>
             </div>

@@ -32,42 +32,46 @@ const Find100Game: React.FC = () => {
   };
 
   const checkGame = () => {
-    let newScore = 0;
-    let allRightSelected = true;
+    let correctCount = 0;
+    const targets = problems.filter(p => p.isCorrect);
     
     selectedIds.forEach(id => {
       const p = problems.find(prob => prob.id === id);
-      if (p && p.isCorrect) newScore += 10;
-      else {
-          newScore -= 5;
-          allRightSelected = false;
-      }
+      if (p && p.isCorrect) correctCount++;
     });
 
-    if (allRightSelected && selectedIds.length > 0) {
-        audioService.play('correct');
+    const isGood = correctCount === targets.length && selectedIds.length === targets.length;
+    
+    if (isGood) {
+        audioService.play('success');
     } else {
-        audioService.play('wrong');
+        audioService.play(correctCount > 0 ? 'correct' : 'wrong');
     }
 
-    setScore(newScore);
+    setScore(correctCount);
     setRevealed(true);
   };
 
+  const totalTargets = problems.filter(p => p.isCorrect).length;
+
   return (
-    <div className="max-w-4xl mx-auto px-2 no-select">
+    <div className="max-w-4xl mx-auto px-2 no-select relative">
+      {/* Vòng tròn điểm số đồng nhất: Điểm màu đỏ và To hơn */}
+      {revealed && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 sm:static sm:translate-x-0 sm:mb-4 z-[100] animate-bounce-short">
+          <div className="w-20 h-20 sm:w-28 sm:h-28 bg-white border-4 border-green-500 rounded-full shadow-2xl flex flex-col items-center justify-center mx-auto">
+            <span className="text-[10px] font-black text-gray-400 uppercase leading-none">Điểm</span>
+            <span className="text-xl sm:text-3xl font-black text-red-600">{score}/{totalTargets}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-5 rounded-3xl shadow-sm border border-gray-100 gap-4">
         <div className="text-center sm:text-left">
             <h2 className="text-xl font-extrabold text-gray-800">Tìm Phép Tính = 100</h2>
             <p className="text-gray-500 text-sm">Chỉ chọn những thẻ có tổng bằng 100</p>
         </div>
         <div className="flex items-center gap-4">
-            {revealed && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full font-bold text-sm">
-                    <StarIcon fill="currentColor" className="w-4 h-4" />
-                    <span>+{score} điểm</span>
-                </div>
-            )}
             <button onClick={initGame} className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100">
                 <RefreshIcon className="w-5 h-5" />
             </button>
@@ -113,7 +117,7 @@ const Find100Game: React.FC = () => {
             </button>
           ) : (
             <div className="text-gray-600 font-bold text-lg animate-fadeIn">
-                {score > 10 ? "Bé giỏi quá! 🥳" : "Cố gắng hơn lần sau nhé! 💪"}
+                {score === totalTargets ? "Bé giỏi quá! 🥳" : "Cố gắng hơn lần sau nhé! 💪"}
                 <button onClick={initGame} className="block mx-auto mt-4 text-indigo-600 underline">Chơi lại ván mới</button>
             </div>
           )}
