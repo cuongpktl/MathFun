@@ -31,11 +31,11 @@ const FALLBACK_PROBLEMS: MathProblem[] = [
 ];
 
 export const generateWordProblem = async (): Promise<MathProblem> => {
-  // Check if API_KEY exists in the environment
-  const apiKey = process.env.API_KEY;
+  // Use a safer way to access the API key to prevent crashes in browser
+  const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : '';
 
   if (!apiKey) {
-    console.warn("API_KEY not found. Using fallback problems.");
+    console.warn("API_KEY not found or empty. Using fallback problems.");
     const randomProblem = FALLBACK_PROBLEMS[Math.floor(Math.random() * FALLBACK_PROBLEMS.length)];
     return { ...randomProblem, id: generateId() };
   }
@@ -61,7 +61,6 @@ export const generateWordProblem = async (): Promise<MathProblem> => {
       },
     });
 
-    // Use .text property directly as per guidelines
     const text = response.text;
     if (!text) throw new Error("Empty response from AI");
 
