@@ -8,13 +8,21 @@ const WordProblem: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<'idle' | 'correct' | 'wrong'>('idle');
+  // State to track the next operator to enable alternating
+  const [nextOperator, setNextOperator] = useState<'+' | '-'>('+');
 
   const loadProblem = async () => {
     setLoading(true);
     setStatus('idle');
     setInput('');
-    const p = await generateWordProblem();
+    
+    // Request a problem with the current nextOperator
+    const p = await generateWordProblem(nextOperator);
     setProblem(p);
+    
+    // Toggle the operator for the next call to ensure variety (Addition -> Subtraction)
+    setNextOperator(prev => (prev === '+' ? '-' : '+'));
+    
     setLoading(false);
   };
 

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MathProblem } from '../types';
 
@@ -10,41 +11,32 @@ interface Props {
 const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
   const [selectedShapeIds, setSelectedShapeIds] = useState<string[]>([]);
   
-  // -- Identification Game Logic --
   const toggleShape = (id: string) => {
       if (showResult) return;
+      let newSelection;
       if (selectedShapeIds.includes(id)) {
-          setSelectedShapeIds(prev => prev.filter(sid => sid !== id));
+          newSelection = selectedShapeIds.filter(sid => sid !== id);
       } else {
-          setSelectedShapeIds(prev => [...prev, id]);
+          newSelection = [...selectedShapeIds, id];
       }
-      // We need to pass something to onUpdate so the parent knows "something" happened, 
-      // but validation happens locally or we encode selections into userAnswer.
-      // Let's encode selected IDs into userAnswer for simplicity if needed, but here we can just validate visually.
-      // Actually, let's store JSON string of selected IDs in userAnswer
+      setSelectedShapeIds(newSelection);
+      onUpdate(JSON.stringify(newSelection));
   };
   
-  // Effect to sync local state to parent
-  React.useEffect(() => {
-      if (problem.visualType === 'identify_shape') {
-        onUpdate(JSON.stringify(selectedShapeIds));
-      }
-  }, [selectedShapeIds]);
-
   const isCorrect = showResult && parseInt(problem.userAnswer || '') === problem.answer;
   const isWrong = showResult && !isCorrect;
 
   // --- Identify Shape Render ---
   if (problem.visualType === 'identify_shape') {
-      const shapes = problem.visualData || [];
-      // Calculate correctness for ID game
-      // Correct if ALL quads are selected AND NO non-quads are selected
-      const correctIds = shapes.filter((s: any) => s.type === 'quad').map((s: any) => s.id);
+      const { targetId, shapes } = problem.visualData || { targetId: '', shapes: [] };
       const userSelected = problem.userAnswer ? JSON.parse(problem.userAnswer) : [];
       
+      const targetShapes = shapes.filter((s: any) => s.type === targetId);
+      const targetShapeIds = targetShapes.map((s: any) => s.id);
+      
       const isIdCorrect = showResult && 
-          correctIds.every((id: string) => userSelected.includes(id)) && 
-          userSelected.every((id: string) => correctIds.includes(id));
+          targetShapeIds.every((id: string) => userSelected.includes(id)) && 
+          userSelected.every((id: string) => targetShapeIds.includes(id));
       
       const borderColor = showResult 
           ? (isIdCorrect ? 'border-green-400 bg-green-50' : 'border-red-400 bg-red-50')
@@ -56,12 +48,12 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
               <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
                   {shapes.map((shape: any) => {
                       const isSelected = userSelected.includes(shape.id);
-                      const isQuad = shape.type === 'quad';
+                      const isTarget = shape.type === targetId;
                       
-                      let shapeClass = "transition-all duration-200 cursor-pointer p-2 rounded-lg border-2 ";
+                      let shapeClass = "transition-all duration-200 cursor-pointer p-2 rounded-lg border-2 flex items-center justify-center ";
                       if (showResult) {
-                          if (isQuad) shapeClass += "border-green-500 bg-green-100 ";
-                          else if (isSelected && !isQuad) shapeClass += "border-red-500 bg-red-100 opacity-50 ";
+                          if (isTarget) shapeClass += "border-green-500 bg-green-100 ";
+                          else if (isSelected && !isTarget) shapeClass += "border-red-500 bg-red-100 opacity-50 ";
                           else shapeClass += "border-transparent opacity-50 ";
                       } else {
                           if (isSelected) shapeClass += "border-teal-500 bg-teal-50 shadow-md transform scale-105 ";
@@ -69,7 +61,7 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
                       }
 
                       return (
-                          <div key={shape.id} onClick={() => toggleShape(shape.id)} className={shapeClass}>
+                          <div key={shape.id} onClick={() => toggleShape(shape.id)} className={shapeClass + "w-24 h-24"}>
                               <svg width="80" height="80" viewBox="0 0 100 100" className="overflow-visible">
                                   <path d={shape.d} fill={shape.color} stroke="currentColor" strokeWidth="3" className="text-gray-600" />
                               </svg>
@@ -78,7 +70,7 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
                   })}
               </div>
               {showResult && !isIdCorrect && (
-                   <div className="mt-2 text-red-500 font-bold text-sm">Hãy chọn đúng các hình có 4 cạnh nhé!</div>
+                   <div className="mt-2 text-red-500 font-bold text-sm">Hãy tìm cho đúng nhé!</div>
               )}
           </div>
       )
@@ -87,38 +79,29 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
   // --- Path Length Render ---
   if (problem.visualType === 'path_length') {
       const segments = problem.visualData || [];
-      // Draw path: Start at 20,50. Move relative.
-      // Just a zigzag visual. 
-      // SVG ViewBox 0 0 300 100
-      
       const points = [];
       let startX = 20;
       let startY = 80;
       points.push({x: startX, y: startY});
       
       segments.forEach((seg: any, idx: number) => {
-           // Zig zag: up, down, up...
-           const newX = startX + 60; // fixed width for visual simplicity
+           const newX = startX + 60;
            const newY = idx % 2 === 0 ? 20 : 80;
            points.push({x: newX, y: newY});
            startX = newX;
       });
 
-      // Create Path D string
       const pathD = points.map((p, i) => (i===0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
 
       return (
           <div className={`p-6 rounded-xl border-2 flex flex-col items-center justify-center bg-white shadow-sm transition-all w-full ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-teal-100 hover:border-teal-300'}`}>
                <h3 className="text-gray-700 font-bold mb-2">{problem.question}</h3>
-               
                <div className="w-full max-w-xs overflow-hidden relative h-32 my-2">
                    <svg width="100%" height="100%" viewBox="0 0 240 100" preserveAspectRatio="xMidYMid meet">
                        <path d={pathD} fill="none" stroke="#0D9488" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                       {/* Points */}
                        {points.map((p, i) => (
                            <circle key={i} cx={p.x} cy={p.y} r="4" fill="#0F766E" />
                        ))}
-                       {/* Labels */}
                        {segments.map((seg: any, i: number) => {
                            const p1 = points[i];
                            const p2 = points[i+1];
@@ -132,7 +115,6 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
                        })}
                    </svg>
                </div>
-               
                <div className="flex items-center gap-2 mt-4 text-xl font-bold text-gray-700">
                    <span>Đáp án:</span>
                     <div className="relative">

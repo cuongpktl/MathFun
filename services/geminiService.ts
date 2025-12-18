@@ -30,22 +30,32 @@ const FALLBACK_PROBLEMS: MathProblem[] = [
   }
 ];
 
-export const generateWordProblem = async (): Promise<MathProblem> => {
-  // Use a safer way to access the API key to prevent crashes in browser
+export const generateWordProblem = async (forcedOperator?: '+' | '-'): Promise<MathProblem> => {
   const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : '';
 
+  // If no API key, use fallback and try to match the operator if provided
   if (!apiKey) {
     console.warn("API_KEY not found or empty. Using fallback problems.");
-    const randomProblem = FALLBACK_PROBLEMS[Math.floor(Math.random() * FALLBACK_PROBLEMS.length)];
+    let filteredFallback = FALLBACK_PROBLEMS;
+    if (forcedOperator) {
+      filteredFallback = FALLBACK_PROBLEMS.filter(p => p.operators?.[0] === forcedOperator);
+      if (filteredFallback.length === 0) filteredFallback = FALLBACK_PROBLEMS;
+    }
+    const randomProblem = filteredFallback[Math.floor(Math.random() * filteredFallback.length)];
     return { ...randomProblem, id: generateId() };
   }
 
   try {
     const ai = new GoogleGenAI({ apiKey });
     
+    // Explicitly instruct the AI to use the forced operator
+    const opInstruction = forcedOperator 
+      ? `MUST use the ${forcedOperator === '+' ? 'Addition (+)' : 'Subtraction (-)'} operation.`
+      : "Use either Addition (+) or Subtraction (-).";
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: "Generate a math word problem for a 2nd grade student in Vietnamese. Constraints: 1. Addition (+) or Subtraction (-). 2. Numbers must be integers. 3. Subtraction: first number > second number. 4. All numbers and result <= 100. Contexts: candies, birds, toys, school items.",
+      contents: `Generate a math word problem for a 2nd grade student in Vietnamese. Constraints: 1. ${opInstruction} 2. Numbers must be integers. 3. Subtraction: first number > second number. 4. All numbers and result <= 100. Contexts: candies, birds, toys, school items.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -56,7 +66,7 @@ export const generateWordProblem = async (): Promise<MathProblem> => {
             operation: { type: Type.STRING, description: "The operation used (+ or -)"},
             numbers: { type: Type.ARRAY, items: { type: Type.INTEGER }, description: "The numbers extracted from text" }
           },
-          required: ["question", "answer"],
+          required: ["question", "answer", "operation"],
         },
       },
     });
@@ -76,12 +86,17 @@ export const generateWordProblem = async (): Promise<MathProblem> => {
       question: data.question,
       answer: data.answer,
       numbers: data.numbers || [],
-      operators: [data.operation || '+']
+      operators: [data.operation || forcedOperator || '+']
     };
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    const randomProblem = FALLBACK_PROBLEMS[Math.floor(Math.random() * FALLBACK_PROBLEMS.length)];
+    let filteredFallback = FALLBACK_PROBLEMS;
+    if (forcedOperator) {
+      filteredFallback = FALLBACK_PROBLEMS.filter(p => p.operators?.[0] === forcedOperator);
+      if (filteredFallback.length === 0) filteredFallback = FALLBACK_PROBLEMS;
+    }
+    const randomProblem = filteredFallback[Math.floor(Math.random() * filteredFallback.length)];
     return { ...randomProblem, id: generateId() };
   }
 };
