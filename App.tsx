@@ -104,9 +104,14 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#f8fafc] pb-10 flex flex-col">
       <header className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 className="text-xl md:text-2xl font-black text-blue-600 uppercase tracking-tighter">
-                Math<span className="text-yellow-500">Fun</span> <span className="hidden sm:inline">Lớp 2</span>
-            </h1>
+            <div className="flex flex-col sm:flex-row sm:items-baseline">
+                <h1 className="text-xl md:text-2xl font-black text-blue-600 uppercase tracking-tighter whitespace-nowrap">
+                    Math<span className="text-yellow-500">Fun</span>
+                </h1>
+                <span className="sm:ml-2 text-[10px] md:text-xs font-black text-gray-500 normal-case italic">
+                    Quang Khải - 2A7
+                </span>
+            </div>
             <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
                 Học kỳ I
             </div>
