@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export const CalculatorIcon = ({ className }: { className?: string }) => (
@@ -44,25 +45,14 @@ export const StarIcon = ({ className, fill }: { className?: string, fill?: strin
 
 export const BirdIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className={className}>
-        {/* Tail Feathers */}
         <path d="M10 55 L5 45 L15 50 L5 60 L15 65 Z" fill="currentColor" />
-        
-        {/* Body */}
         <path d="M20 50 C20 25 35 15 60 15 C85 15 95 35 95 50 C95 75 80 85 50 85 C30 85 20 70 20 50 Z" fill="currentColor" />
-        
-        {/* Wing */}
         <path d="M35 55 C35 55 40 40 60 45 C75 50 70 70 50 70 C40 70 35 55 35 55 Z" fill="white" fillOpacity="0.4" />
-        
-        {/* Beak */}
         <path d="M85 45 L100 48 L88 55 Z" fill="#FFC107" />
         <path d="M88 55 L95 58 L85 58 Z" fill="#FF9800" />
-        
-        {/* Eye */}
         <circle cx="75" cy="35" r="10" fill="white" />
         <circle cx="77" cy="35" r="4" fill="#212121" />
         <circle cx="79" cy="33" r="2" fill="white" fillOpacity="0.8" />
-        
-        {/* Cheek */}
         <circle cx="80" cy="55" r="5" fill="#F48FB1" fillOpacity="0.5" />
     </svg>
 );
@@ -95,4 +85,28 @@ export const ShapesIcon = ({ className }: { className?: string }) => (
       <path d="M12 3l10 18H2L12 3z" />
       <rect x="4" y="10" width="8" height="8" transform="rotate(15 8 14)" />
     </svg>
+);
+
+export const PatternIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M3 3h6v6H3z" />
+        <path d="M15 3h6v6h-6z" />
+        <path d="M3 15h6v6H3z" />
+        <path d="M15 15h6v6h-6z" />
+    </svg>
+);
+
+export const CompareIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m15 18-3-3 3-3" />
+    <path d="m9 6 3 3-3 3" />
+    <path d="M5 12h14" />
+  </svg>
+);
+
+export const RulerIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m15 5 4 4" /><path d="m13 7 4 4" /><path d="m11 9 4 4" /><path d="m7 13 4 4" /><path d="m5 15 4 4" /><path d="M2 22 22 2" />
+  </svg>
 );

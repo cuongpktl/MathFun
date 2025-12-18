@@ -1,20 +1,21 @@
+
 import React from 'react';
 
 export interface MathProblem {
   id: string;
-  type: 'word' | 'vertical' | 'expression' | 'find100' | 'fill_blank' | 'measurement' | 'geometry';
+  type: 'word' | 'vertical' | 'expression' | 'find100' | 'fill_blank' | 'measurement' | 'geometry' | 'pattern' | 'challenge' | 'puzzle' | 'comparison';
   question?: string;
   numbers?: number[];
   operators?: string[];
-  answer: number;
+  answer: any; // Can be number or string or array or object
   userAnswer?: string;
   isCorrect?: boolean;
-  options?: number[]; // For finding games
+  options?: any[]; // For choices
   
-  // Specific for measurement
-  unit?: string; // 'kg' or 'l'
-  visualType?: 'calc' | 'balance' | 'spring' | 'beaker' | 'identify_shape' | 'path_length';
-  visualData?: any; // Holds weights, liquid level, shapes, or path data
+  // Specific for measurement & geometry
+  unit?: string;
+  visualType?: 'calc' | 'balance' | 'spring' | 'beaker' | 'identify_shape' | 'path_length' | 'puzzle_logic' | 'dissection' | 'compare_expr';
+  visualData?: any; 
 }
 
 export interface TabItem {

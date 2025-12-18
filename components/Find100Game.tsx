@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { MathProblem } from '../types';
 import { generateFind100Problems } from '../services/mathUtils';
+import { audioService } from '../services/audioService';
 import { RefreshIcon, StarIcon } from './icons';
 
 const Find100Game: React.FC = () => {
@@ -10,6 +12,7 @@ const Find100Game: React.FC = () => {
   const [revealed, setRevealed] = useState(false);
 
   const initGame = () => {
+    audioService.play('click');
     setProblems(generateFind100Problems(8));
     setSelectedIds([]);
     setScore(0);
@@ -22,6 +25,7 @@ const Find100Game: React.FC = () => {
 
   const toggleSelect = (id: string) => {
     if (revealed) return;
+    audioService.play('click');
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
     );
@@ -29,11 +33,23 @@ const Find100Game: React.FC = () => {
 
   const checkGame = () => {
     let newScore = 0;
+    let allRightSelected = true;
+    
     selectedIds.forEach(id => {
       const p = problems.find(prob => prob.id === id);
       if (p && p.isCorrect) newScore += 10;
-      else if (p && !p.isCorrect) newScore -= 5;
+      else {
+          newScore -= 5;
+          allRightSelected = false;
+      }
     });
+
+    if (allRightSelected && selectedIds.length > 0) {
+        audioService.play('correct');
+    } else {
+        audioService.play('wrong');
+    }
+
     setScore(newScore);
     setRevealed(true);
   };

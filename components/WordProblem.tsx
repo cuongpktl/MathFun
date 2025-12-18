@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { MathProblem } from '../types';
 import { generateWordProblem } from '../services/geminiService';
+import { audioService } from '../services/audioService';
 import { RefreshIcon, CheckCircleIcon, StarIcon } from './icons';
 
 const WordProblem: React.FC = () => {
@@ -8,21 +10,17 @@ const WordProblem: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<'idle' | 'correct' | 'wrong'>('idle');
-  // State to track the next operator to enable alternating
   const [nextOperator, setNextOperator] = useState<'+' | '-'>('+');
 
   const loadProblem = async () => {
+    audioService.play('click');
     setLoading(true);
     setStatus('idle');
     setInput('');
     
-    // Request a problem with the current nextOperator
     const p = await generateWordProblem(nextOperator);
     setProblem(p);
-    
-    // Toggle the operator for the next call to ensure variety (Addition -> Subtraction)
     setNextOperator(prev => (prev === '+' ? '-' : '+'));
-    
     setLoading(false);
   };
 
@@ -33,8 +31,10 @@ const WordProblem: React.FC = () => {
   const checkAnswer = () => {
     if (!problem) return;
     if (parseInt(input) === problem.answer) {
+      audioService.play('correct');
       setStatus('correct');
     } else {
+      audioService.play('wrong');
       setStatus('wrong');
     }
   };

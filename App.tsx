@@ -1,18 +1,56 @@
+
 import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { TabItem, MathProblem } from './types';
-import { generateVerticalProblems, generateExpressionProblems, generateFillBlankProblems, generateMeasurementProblems, generateGeometryProblems } from './services/mathUtils';
+import { audioService } from './services/audioService';
+import { 
+  generateVerticalProblems, 
+  generateExpressionProblems, 
+  generateFillBlankProblems, 
+  generateMeasurementProblems, 
+  generateGeometryProblems,
+  generatePatternProblems,
+  generateIdentifyQuadsProblem,
+  generateChallengeProblem,
+  generatePuzzleProblem,
+  generateComparisonProblems,
+  generateDmProblems
+} from './services/mathUtils';
 import VerticalMath from './components/VerticalMath';
 import ExpressionMath from './components/ExpressionMath';
 import FillBlankMath from './components/FillBlankMath';
 import MeasurementMath from './components/MeasurementMath';
 import GeometryMath from './components/GeometryMath';
+import PatternMath from './components/PatternMath';
+import ChallengeMath from './components/ChallengeMath';
+import PuzzleMath from './components/PuzzleMath';
+import ComparisonMath from './components/ComparisonMath';
+import DmMath from './components/DmMath';
 import Find100Game from './components/Find100Game';
 import WordProblem from './components/WordProblem';
 import MatchingGame from './components/MatchingGame';
-import { CalculatorIcon, BookOpenIcon, GridIcon, LayersIcon, CheckCircleIcon, RefreshIcon, PuzzleIcon, ScaleIcon, ShapesIcon } from './components/icons';
+import { 
+  CalculatorIcon, 
+  BookOpenIcon, 
+  GridIcon, 
+  LayersIcon, 
+  CheckCircleIcon, 
+  RefreshIcon, 
+  PuzzleIcon, 
+  ScaleIcon, 
+  ShapesIcon,
+  PatternIcon,
+  StarIcon,
+  CompareIcon,
+  RulerIcon
+} from './components/icons';
 
 const TABS: TabItem[] = [
   { id: 'word', label: 'Bài Toán', icon: <BookOpenIcon />, color: 'bg-yellow-500' },
+  { id: 'dm', label: 'Đề-xi-mét', icon: <RulerIcon />, color: 'bg-green-600' },
+  { id: 'practice', label: 'Luyện Tập', icon: <StarIcon />, color: 'bg-orange-400' },
+  { id: 'pattern', label: 'Quy Luật', icon: <PatternIcon />, color: 'bg-teal-600' },
+  { id: 'compare', label: 'So Sánh', icon: <CompareIcon />, color: 'bg-indigo-600' },
   { id: 'geometry', label: 'Hình Học', icon: <ShapesIcon />, color: 'bg-teal-500' },
   { id: 'measurement', label: 'Đo Lường', icon: <ScaleIcon />, color: 'bg-pink-500' },
   { id: 'vertical', label: 'Đặt Tính', icon: <LayersIcon />, color: 'bg-blue-500' },
@@ -20,6 +58,8 @@ const TABS: TabItem[] = [
   { id: 'cards', label: 'Thẻ Số', icon: <GridIcon />, color: 'bg-indigo-500' },
   { id: 'expression', label: 'Biểu Thức', icon: <CalculatorIcon />, color: 'bg-purple-500' },
   { id: 'game', label: 'Tìm 100', icon: <CheckCircleIcon />, color: 'bg-green-500' },
+  { id: 'challenge', label: 'Thử Thách', icon: <StarIcon fill="white" />, color: 'bg-rose-500' },
+  { id: 'puzzle', label: 'Xếp Hình', icon: <GridIcon />, color: 'bg-sky-500' },
 ];
 
 const App: React.FC = () => {
@@ -29,32 +69,73 @@ const App: React.FC = () => {
 
   useEffect(() => {
     setShowResult(false);
-    if (activeTab === 'vertical') {
-      setProblems(generateVerticalProblems(6));
-    } else if (activeTab === 'expression') {
-      setProblems(generateExpressionProblems(5));
-    } else if (activeTab === 'cards') {
-        setProblems(generateFillBlankProblems(4));
-    } else if (activeTab === 'measurement') {
-        setProblems(generateMeasurementProblems(6));
-    } else if (activeTab === 'geometry') {
-        setProblems(generateGeometryProblems(4));
-    } else {
-      setProblems([]);
-    }
+    setProblems([]); 
+    refreshData();
   }, [activeTab]);
+
+  const refreshData = () => {
+    if (activeTab === 'vertical') setProblems(generateVerticalProblems(6));
+    else if (activeTab === 'expression') setProblems(generateExpressionProblems(5));
+    else if (activeTab === 'cards') setProblems(generateFillBlankProblems(4));
+    else if (activeTab === 'measurement') setProblems(generateMeasurementProblems(6));
+    else if (activeTab === 'geometry') setProblems(generateGeometryProblems(4));
+    else if (activeTab === 'pattern') setProblems(generatePatternProblems(4));
+    else if (activeTab === 'compare') setProblems(generateComparisonProblems(5));
+    else if (activeTab === 'dm') setProblems(generateDmProblems(10));
+    else if (activeTab === 'practice') setProblems([generateIdentifyQuadsProblem()]);
+    else if (activeTab === 'challenge') setProblems([generateChallengeProblem()]);
+    else if (activeTab === 'puzzle') setProblems([generatePuzzleProblem()]);
+    else setProblems([]);
+  };
 
   const handleUpdateProblem = (id: string, val: string) => {
     setProblems(prev => prev.map(p => p.id === id ? { ...p, userAnswer: val } : p));
   };
 
   const handleRefresh = () => {
+    audioService.play('click');
     setShowResult(false);
-    if (activeTab === 'vertical') setProblems(generateVerticalProblems(6));
-    else if (activeTab === 'expression') setProblems(generateExpressionProblems(5));
-    else if (activeTab === 'cards') setProblems(generateFillBlankProblems(4));
-    else if (activeTab === 'measurement') setProblems(generateMeasurementProblems(6));
-    else if (activeTab === 'geometry') setProblems(generateGeometryProblems(4));
+    refreshData();
+  };
+
+  const handleTabChange = (id: string) => {
+    audioService.play('click');
+    setActiveTab(id);
+  };
+
+  const checkResults = () => {
+    if (showResult) {
+      setShowResult(false);
+      return;
+    }
+
+    const allCorrect = problems.every(p => {
+      if (p.type === 'geometry' && p.visualType === 'identify_shape') {
+        const userSelected = p.userAnswer ? JSON.parse(p.userAnswer) : [];
+        const targetIds = p.visualData.shapes.filter((s: any) => s.type === p.visualData.targetId).map((s: any) => s.id);
+        return targetIds.length === userSelected.length && targetIds.every((id: string) => userSelected.includes(id));
+      }
+      if (p.type === 'puzzle') {
+        const userSelected = p.userAnswer ? JSON.parse(p.userAnswer) : [];
+        const targetIds = p.answer as string[];
+        return targetIds.length === userSelected.length && targetIds.every(id => userSelected.includes(id));
+      }
+      return parseInt(p.userAnswer || '') === p.answer;
+    });
+
+    if (allCorrect) {
+      audioService.play('success');
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6']
+      });
+    } else {
+      audioService.play('wrong');
+    }
+
+    setShowResult(true);
   };
 
   const renderContent = () => {
@@ -64,14 +145,21 @@ const App: React.FC = () => {
 
     const isVertical = activeTab === 'vertical';
     const isExpression = activeTab === 'expression';
+    const isCompare = activeTab === 'compare';
+    const isDm = activeTab === 'dm';
     
     return (
       <div className="max-w-4xl mx-auto animate-fadeIn px-2 sm:px-0">
-        <div className={`grid grid-cols-1 ${isVertical || isExpression ? 'sm:grid-cols-2' : 'sm:grid-cols-2'} gap-4 sm:gap-6`}>
+        <div className={`grid grid-cols-1 ${isVertical || isExpression || isCompare || isDm ? 'sm:grid-cols-2' : ''} gap-4 sm:gap-6`}>
             {problems.map(p => {
                 if (activeTab === 'cards') return <FillBlankMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
                 if (activeTab === 'measurement') return <MeasurementMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
-                if (activeTab === 'geometry') return <GeometryMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
+                if (activeTab === 'geometry' || activeTab === 'practice') return <GeometryMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
+                if (activeTab === 'pattern') return <PatternMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
+                if (activeTab === 'challenge') return <ChallengeMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
+                if (activeTab === 'puzzle') return <PuzzleMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
+                if (activeTab === 'compare') return <ComparisonMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
+                if (activeTab === 'dm') return <DmMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
                 if (isVertical) return <VerticalMath key={p.id} problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />;
                 return (
                     <div key={p.id} className="sm:col-span-2">
@@ -81,21 +169,23 @@ const App: React.FC = () => {
             })}
         </div>
         
-        <div className="mt-10 flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-4 px-4 pb-10">
-            <button 
-                onClick={handleRefresh}
-                className="px-6 py-4 sm:py-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-blue-300 text-gray-700 font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
-            >
-                <RefreshIcon />
-                Làm Đề Khác
-            </button>
-            <button 
-                onClick={() => setShowResult(!showResult)}
-                className={`px-8 py-4 sm:py-3 rounded-2xl font-bold shadow-lg transform transition-all active:scale-95 text-white ${showResult ? 'bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'}`}
-            >
-                {showResult ? 'Làm Lại' : 'Nộp Bài'}
-            </button>
-        </div>
+        {problems.length > 0 && (
+          <div className="mt-10 flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-4 px-4 pb-10">
+              <button 
+                  onClick={handleRefresh}
+                  className="px-6 py-4 sm:py-3 rounded-2xl bg-white border-2 border-gray-200 hover:border-blue-300 text-gray-700 font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                  <RefreshIcon />
+                  Làm Đề Khác
+              </button>
+              <button 
+                  onClick={checkResults}
+                  className={`px-8 py-4 sm:py-3 rounded-2xl font-bold shadow-lg transform transition-all active:scale-95 text-white ${showResult ? 'bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'}`}
+              >
+                  {showResult ? 'Làm Lại' : 'Nộp Bài'}
+              </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -122,7 +212,7 @@ const App: React.FC = () => {
                 {TABS.map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => handleTabChange(tab.id)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 ${
                             activeTab === tab.id 
                             ? `${tab.color} text-white shadow-lg shadow-${tab.color.split('-')[1]}-200 transform scale-105` 

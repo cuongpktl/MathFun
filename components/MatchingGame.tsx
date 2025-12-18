@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { MathProblem } from '../types';
 import { generateMatchingGameData } from '../services/mathUtils';
+import { audioService } from '../services/audioService';
 import { RefreshIcon, StarIcon, BirdIcon, HouseIcon } from './icons';
 
 interface HouseItem {
@@ -19,6 +21,7 @@ const MatchingGame: React.FC = () => {
   const [wrongMatch, setWrongMatch] = useState(false);
 
   const initGame = () => {
+    audioService.play('click');
     const data = generateMatchingGameData(4);
     setBirds(data.birds);
     setHouses(data.houses);
@@ -35,10 +38,12 @@ const MatchingGame: React.FC = () => {
   useEffect(() => {
       if (selectedBirdId && selectedHouseId) {
           if (selectedBirdId === selectedHouseId) {
+              audioService.play('correct');
               setSolvedIds(prev => [...prev, selectedBirdId]);
               setSelectedBirdId(null);
               setSelectedHouseId(null);
           } else {
+              audioService.play('wrong');
               setWrongMatch(true);
               const timer = setTimeout(() => {
                   setWrongMatch(false);
@@ -52,11 +57,13 @@ const MatchingGame: React.FC = () => {
 
   const handleBirdClick = (id: string) => {
       if (solvedIds.includes(id) || wrongMatch) return;
+      audioService.play('click');
       setSelectedBirdId(selectedBirdId === id ? null : id);
   };
 
   const handleHouseClick = (id: string) => {
       if (solvedIds.includes(id) || wrongMatch || !selectedBirdId) return;
+      audioService.play('click');
       setSelectedHouseId(selectedHouseId === id ? null : id);
   };
 

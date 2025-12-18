@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MathProblem } from '../types';
 
@@ -9,17 +8,15 @@ interface Props {
 }
 
 const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
-  const [selectedShapeIds, setSelectedShapeIds] = useState<string[]>([]);
-  
   const toggleShape = (id: string) => {
       if (showResult) return;
+      const userSelected = problem.userAnswer ? JSON.parse(problem.userAnswer) : [];
       let newSelection;
-      if (selectedShapeIds.includes(id)) {
-          newSelection = selectedShapeIds.filter(sid => sid !== id);
+      if (userSelected.includes(id)) {
+          newSelection = userSelected.filter((sid: string) => sid !== id);
       } else {
-          newSelection = [...selectedShapeIds, id];
+          newSelection = [...userSelected, id];
       }
-      setSelectedShapeIds(newSelection);
       onUpdate(JSON.stringify(newSelection));
   };
   
@@ -28,11 +25,11 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
 
   // --- Identify Shape Render ---
   if (problem.visualType === 'identify_shape') {
-      const { targetId, shapes } = problem.visualData || { targetId: '', shapes: [] };
-      const userSelected = problem.userAnswer ? JSON.parse(problem.userAnswer) : [];
+      const visualData = (problem.visualData && typeof problem.visualData === 'object' && !Array.isArray(problem.visualData)) ? problem.visualData : {};
+      const { targetId = '', shapes = [] } = visualData;
       
-      const targetShapes = shapes.filter((s: any) => s.type === targetId);
-      const targetShapeIds = targetShapes.map((s: any) => s.id);
+      const userSelected = problem.userAnswer ? JSON.parse(problem.userAnswer) : [];
+      const targetShapeIds = shapes.filter((s: any) => s.type === targetId).map((s: any) => s.id);
       
       const isIdCorrect = showResult && 
           targetShapeIds.every((id: string) => userSelected.includes(id)) && 
@@ -40,37 +37,58 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
       
       const borderColor = showResult 
           ? (isIdCorrect ? 'border-green-400 bg-green-50' : 'border-red-400 bg-red-50')
-          : 'border-teal-100 hover:border-teal-300';
+          : 'border-white';
 
       return (
-          <div className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center bg-white shadow-sm transition-all w-full ${borderColor}`}>
-              <h3 className="text-gray-700 font-bold mb-4">{problem.question}</h3>
-              <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+          <div className={`p-6 rounded-3xl border-4 flex flex-col items-center justify-center bg-white shadow-xl transition-all w-full ${borderColor}`}>
+              <h3 className="text-xl font-black text-gray-800 mb-8 text-center uppercase tracking-tight">
+                  {problem.question}
+              </h3>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-10">
                   {shapes.map((shape: any) => {
                       const isSelected = userSelected.includes(shape.id);
                       const isTarget = shape.type === targetId;
                       
-                      let shapeClass = "transition-all duration-200 cursor-pointer p-2 rounded-lg border-2 flex items-center justify-center ";
+                      let shapeContainerClass = "relative transition-all duration-300 cursor-pointer p-4 rounded-3xl border-4 flex flex-col items-center justify-center ";
                       if (showResult) {
-                          if (isTarget) shapeClass += "border-green-500 bg-green-100 ";
-                          else if (isSelected && !isTarget) shapeClass += "border-red-500 bg-red-100 opacity-50 ";
-                          else shapeClass += "border-transparent opacity-50 ";
+                          if (isTarget) {
+                              shapeContainerClass += isSelected ? "border-green-500 bg-green-50 scale-105 shadow-green-100 " : "border-green-200 bg-white opacity-80 ";
+                          } else {
+                              shapeContainerClass += isSelected ? "border-red-500 bg-red-50 animate-shake " : "border-transparent opacity-40 ";
+                          }
                       } else {
-                          if (isSelected) shapeClass += "border-teal-500 bg-teal-50 shadow-md transform scale-105 ";
-                          else shapeClass += "border-transparent hover:bg-gray-50 ";
+                          if (isSelected) shapeContainerClass += "border-orange-400 bg-orange-50 shadow-2xl shadow-orange-100 -translate-y-2 ";
+                          else shapeContainerClass += "border-transparent bg-gray-50 hover:bg-white hover:border-gray-200 hover:shadow-lg ";
                       }
 
                       return (
-                          <div key={shape.id} onClick={() => toggleShape(shape.id)} className={shapeClass + "w-24 h-24"}>
-                              <svg width="80" height="80" viewBox="0 0 100 100" className="overflow-visible">
-                                  <path d={shape.d} fill={shape.color} stroke="currentColor" strokeWidth="3" className="text-gray-600" />
+                          <div key={shape.id} onClick={() => toggleShape(shape.id)} className={shapeContainerClass + "w-32 h-32 sm:w-40 sm:h-40"}>
+                              <svg width="100%" height="100%" viewBox="0 0 100 100" className="overflow-visible drop-shadow-md">
+                                  <path d={shape.d} fill={shape.color} stroke="#334155" strokeWidth="3" />
+                                  <text x="50" y="55" textAnchor="middle" className="text-xl font-black fill-gray-800 pointer-events-none select-none" style={{ filter: 'drop-shadow(0px 1px 1px white)' }}>
+                                      {shape.num || ''}
+                                  </text>
                               </svg>
+
+                              {showResult && isSelected && (
+                                  <div className={`absolute -top-3 -right-3 rounded-full p-1.5 shadow-lg ${isTarget ? 'bg-green-500' : 'bg-red-500'}`}>
+                                      {isTarget ? (
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                      ) : (
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                      )}
+                                  </div>
+                              )}
                           </div>
                       )
                   })}
               </div>
-              {showResult && !isIdCorrect && (
-                   <div className="mt-2 text-red-500 font-bold text-sm">Hãy tìm cho đúng nhé!</div>
+              
+              {showResult && (
+                  <div className={`mt-10 px-6 py-3 rounded-2xl font-black text-lg ${isIdCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600 animate-bounce-short'}`}>
+                      {isIdCorrect ? '🎉 Hoan hô! Bé chọn rất đúng!' : '🔍 Bé hãy nhìn kỹ các cạnh và chọn lại nhé!'}
+                  </div>
               )}
           </div>
       )
@@ -78,7 +96,7 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
 
   // --- Path Length Render ---
   if (problem.visualType === 'path_length') {
-      const segments = problem.visualData || [];
+      const segments = Array.isArray(problem.visualData) ? problem.visualData : [];
       const points = [];
       let startX = 20;
       let startY = 80;
@@ -142,7 +160,7 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
       )
   }
 
-  return <div>Unknown Geometry Problem</div>;
+  return <div>Vui lòng đợi trong giây lát...</div>;
 };
 
 export default GeometryMath;
