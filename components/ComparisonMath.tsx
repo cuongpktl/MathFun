@@ -14,12 +14,13 @@ const ComparisonMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
   const [rightIntermediate, setRightIntermediate] = useState('');
   
   const nums = problem.numbers || [0, 0, 0, 0];
+  const ops = problem.operators || ['+', '+'];
   const userAns = problem.userAnswer || '';
   const isCorrect = showResult && userAns === problem.answer;
   const isWrong = showResult && userAns !== '' && !isCorrect;
 
-  const leftTarget = nums[0] + nums[1];
-  const rightTarget = nums[2] + nums[3];
+  const leftTarget = ops[0] === '+' ? nums[0] + nums[1] : nums[0] - nums[1];
+  const rightTarget = ops[1] === '+' ? nums[2] + nums[3] : nums[2] - nums[3];
 
   const isLeftCorrect = leftIntermediate !== '' && parseInt(leftIntermediate) === leftTarget;
   const isRightCorrect = rightIntermediate !== '' && parseInt(rightIntermediate) === rightTarget;
@@ -47,7 +48,7 @@ const ComparisonMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
         <div className="flex flex-col items-center">
             <div className="flex items-center gap-2 text-2xl font-black text-gray-700 font-mono bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
                 <span>{nums[0]}</span>
-                <span className="text-indigo-400 text-xl">+</span>
+                <span className={`${ops[0] === '+' ? 'text-indigo-400' : 'text-red-400'} text-xl`}>{ops[0]}</span>
                 <span>{nums[1]}</span>
             </div>
             
@@ -106,7 +107,7 @@ const ComparisonMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
         <div className="flex flex-col items-center">
             <div className="flex items-center gap-2 text-2xl font-black text-gray-700 font-mono bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
                 <span>{nums[2]}</span>
-                <span className="text-indigo-400 text-xl">+</span>
+                <span className={`${ops[1] === '+' ? 'text-indigo-400' : 'text-red-400'} text-xl`}>{ops[1]}</span>
                 <span>{nums[3]}</span>
             </div>
 

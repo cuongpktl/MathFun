@@ -28,6 +28,7 @@ import ComparisonMath from './components/ComparisonMath';
 import DmMath from './components/DmMath';
 import Find100Game from './components/Find100Game';
 import WordProblem from './components/WordProblem';
+import WordProblemItem from './components/WordProblemItem';
 import MatchingGame from './components/MatchingGame';
 import { 
   CalculatorIcon, 
@@ -108,6 +109,7 @@ const App: React.FC = () => {
 
   const isProblemCorrect = (p: MathProblem) => {
     if (p.type === 'geometry' && p.visualType === 'identify_shape') {
+      // Fix: p.userSelected does not exist, use p.userAnswer instead
       const userSelected = p.userAnswer ? JSON.parse(p.userAnswer) : [];
       const targetIds = p.visualData.shapes.filter((s: any) => s.type === p.visualData.targetId).map((s: any) => s.id);
       return targetIds.length === userSelected.length && targetIds.every((id: string) => userSelected.includes(id));
@@ -121,16 +123,13 @@ const App: React.FC = () => {
           return placed && (placed.rotation % 360) === (t.targetRot % 360);
       });
     }
-    if (p.type === 'challenge') {
-        return p.userAnswer === p.answer;
+    if (p.type === 'challenge' || p.type === 'word' || p.type === 'comparison') {
+        return p.userAnswer === String(p.answer) || parseInt(p.userAnswer || '') === p.answer;
     }
     if (p.type === 'pattern') {
         const userAnswers = p.userAnswer ? JSON.parse(p.userAnswer) : {};
         const hiddenCells = p.visualData.hiddenCells as any[];
         return hiddenCells.every(h => userAnswers[`${h.r}-${h.c}`] === h.target);
-    }
-    if (p.type === 'comparison') {
-        return p.userAnswer === p.answer;
     }
     return parseInt(p.userAnswer || '') === p.answer;
   };
@@ -176,6 +175,7 @@ const App: React.FC = () => {
                     </div>
                     
                     <div className={`${isFullWidth ? 'w-full' : 'bg-white rounded-[32px] p-2 sm:p-4'}`}>
+                        {p.type === 'word' && <WordProblemItem problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
                         {p.type === 'fill_blank' && <FillBlankMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
                         {p.type === 'measurement' && p.unit !== 'dm' && <MeasurementMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
                         {p.type === 'geometry' && <GeometryMath problem={p} onUpdate={(val) => handleUpdateProblem(p.id, val)} showResult={showResult} />}
@@ -226,7 +226,6 @@ const App: React.FC = () => {
                     </span>
                 </div>
 
-                {/* Vòng tròn điểm số hiển thị ngay cạnh tên khi nộp bài */}
                 {showResult && problems.length > 0 && (
                   <div className="animate-bounce-short">
                     <div className="w-16 h-16 sm:w-24 sm:h-24 bg-white border-4 border-blue-600 rounded-full shadow-xl flex flex-col items-center justify-center">

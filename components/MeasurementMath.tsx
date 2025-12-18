@@ -43,11 +43,8 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
       <div className="bg-orange-50 p-6 rounded-[32px] border-4 border-orange-100 flex flex-col items-center shadow-sm animate-fadeIn">
         <h3 className="text-gray-700 font-black mb-6 w-full text-center">Con cá nặng bao nhiêu kg?</h3>
         <div className="relative w-full max-w-[280px] h-40 mt-2">
-          {/* Trục cân */}
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[25px] border-l-transparent border-r-[25px] border-r-transparent border-b-[50px] border-b-gray-400"></div>
-          {/* Đòn cân */}
           <div className="absolute bottom-[50px] left-0 w-full h-3 bg-gray-600 rounded-full shadow-sm"></div>
-          {/* Đĩa bên trái: Cá */}
           <div className="absolute bottom-[53px] left-0 w-32 h-2 bg-gray-400 origin-bottom flex justify-center">
             <div className="absolute bottom-2 flex flex-col items-center">
                <svg width="100" height="60" viewBox="0 0 100 60" className="drop-shadow-lg transform -scale-x-100">
@@ -59,7 +56,6 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
                <div className="w-24 h-2 bg-gray-300 rounded-full mt-1"></div>
             </div>
           </div>
-          {/* Đĩa bên phải: Quả cân */}
           <div className="absolute bottom-[53px] right-0 w-32 h-2 bg-gray-400 flex flex-col-reverse items-center justify-start pb-2 gap-1">
             {weights.map((w, idx) => (
               <div key={idx} className="bg-amber-500 text-white text-[10px] font-black w-12 h-10 flex items-center justify-center rounded-lg border-b-4 border-amber-700 shadow-md">
@@ -79,12 +75,11 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
   // --- 2. Cân đồng hồ (Spring Scale) ---
   if (problem.visualType === 'spring') {
     const weight = typeof problem.visualData === 'number' ? problem.visualData : 0;
-    const rotation = weight * 36; // 360 / 10kg
+    const rotation = weight * 36;
     return (
       <div className="bg-emerald-50 p-6 rounded-[32px] border-4 border-emerald-100 flex flex-col items-center shadow-sm animate-fadeIn">
         <h3 className="text-gray-700 font-black mb-6 w-full text-center">Quả dưa hấu nặng bao nhiêu kg?</h3>
         <div className="relative w-48 h-64 flex flex-col items-center">
-          {/* Quả dưa hấu */}
           <div className="z-10 w-36 h-28 -mb-4">
             <svg viewBox="0 0 100 80" className="w-full h-full drop-shadow-xl">
               <ellipse cx="50" cy="40" rx="45" ry="35" fill="#166534" />
@@ -92,7 +87,6 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
               <path d="M50 5 Q 55 -2 60 5" stroke="#3f6212" strokeWidth="4" fill="none" />
             </svg>
           </div>
-          {/* Khung cân */}
           <div className="w-32 h-4 bg-gray-300 rounded-full border-2 border-gray-400 shadow-inner"></div>
           <div className="w-6 h-12 bg-gray-400"></div>
           <div className="relative w-40 h-40 bg-emerald-600 rounded-[32px] border-b-8 border-emerald-800 shadow-2xl flex items-center justify-center">
@@ -103,7 +97,6 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
                   <span className="text-[10px] font-black text-gray-500 mt-1" style={{ transform: `rotate(-${n * 36}deg)` }}>{n}</span>
                 </div>
               ))}
-              {/* Kim cân */}
               <div className="absolute top-1/2 left-1/2 w-1 h-14 bg-red-600 origin-bottom -translate-x-1/2 -translate-y-full rounded-full transition-transform duration-1000" style={{ transform: `translate(-50%, -100%) rotate(${rotation}deg)` }}></div>
               <div className="w-3 h-3 bg-gray-800 rounded-full z-10 shadow-md"></div>
             </div>
@@ -116,29 +109,69 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
     );
   }
 
-  // --- 3. Bình chia độ (Beaker) ---
+  // --- 3. Bình chia độ (Beaker) - SỬA LẠI HOÀN TOÀN BẰNG SVG ---
   if (problem.visualType === 'beaker') {
     const level = typeof problem.visualData === 'number' ? problem.visualData : 0;
-    const heightPerc = (level / 10) * 85;
+    
+    // Tọa độ SVG: Bình cao 200 đơn vị, từ y=20 đến y=180
+    // Mỗi 1L tương ứng 16 đơn vị chiều cao (160 / 10 = 16)
+    const baseY = 180;
+    const waterY = baseY - (level * 16);
+    const waterHeight = level * 16;
+
     return (
       <div className="bg-blue-50 p-6 rounded-[32px] border-4 border-blue-100 flex flex-col items-center shadow-sm animate-fadeIn">
         <h3 className="text-gray-700 font-black mb-6 w-full text-center">Bình nước chứa bao nhiêu Lít (l)?</h3>
-        <div className="relative w-36 h-56 bg-white/80 border-[6px] border-gray-300 border-t-0 rounded-b-3xl overflow-hidden shadow-inner flex flex-col-reverse">
-          {/* Mực nước */}
-          <div className="w-full bg-blue-400/80 transition-all duration-1000 border-t-4 border-blue-500" style={{ height: `${heightPerc}%` }}>
-            <div className="absolute inset-0 bg-white/10 skew-x-12 translate-x-10"></div>
-          </div>
-          {/* Vạch chia */}
-          <div className="absolute inset-0 pointer-events-none">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(l => (
-              <div key={l} className="absolute right-0 w-full flex items-center justify-end pr-2" style={{ bottom: `${(l/10)*85}%` }}>
-                <span className="text-[10px] font-black text-gray-400 mr-2">{l % 2 === 0 ? l : ''}</span>
-                <div className={`h-0.5 bg-gray-300 ${l % 2 === 0 ? 'w-8' : 'w-4'}`}></div>
-              </div>
-            ))}
-          </div>
+        
+        <div className="relative w-48 h-64 flex items-center justify-center">
+          <svg width="160" height="220" viewBox="0 0 160 220" className="overflow-visible">
+            {/* Thân bình (Nền trắng trong suốt) */}
+            <rect x="30" y="10" width="100" height="180" rx="10" fill="white" fillOpacity="0.8" stroke="#cbd5e1" strokeWidth="4" />
+            
+            {/* Mực nước (Blue) - Khớp chính xác với baseY và waterY */}
+            <rect 
+              x="32" 
+              y={waterY} 
+              width="96" 
+              height={waterHeight} 
+              rx="2" 
+              fill="#60A5FA" 
+              className="transition-all duration-1000"
+            />
+            {/* Đường gợn nước ở trên cùng */}
+            {level > 0 && (
+              <line x1="32" y1={waterY} x2="128" y2={waterY} stroke="#2563EB" strokeWidth="4" className="transition-all duration-1000" />
+            )}
+
+            {/* Vạch chia độ */}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(l => {
+              const tickY = baseY - (l * 16);
+              const isEven = l % 2 === 0;
+              return (
+                <g key={l}>
+                  {/* Vạch kẻ */}
+                  <line 
+                    x1={isEven ? 80 : 100} 
+                    y1={tickY} 
+                    x2="130" 
+                    y2={tickY} 
+                    stroke={isEven ? "#64748b" : "#94a3b8"} 
+                    strokeWidth={isEven ? "3" : "2"} 
+                  />
+                  {/* Nhãn số (chỉ hiện số chẵn để thoáng mắt) */}
+                  {isEven && (
+                    <text x="140" y={tickY + 5} className="text-[14px] font-black fill-gray-500">{l}</text>
+                  )}
+                </g>
+              );
+            })}
+            
+            {/* Đáy bình */}
+            <path d="M 30 180 Q 30 190 40 190 L 120 190 Q 130 190 130 180" fill="none" stroke="#cbd5e1" strokeWidth="4" />
+          </svg>
         </div>
-        <div className="mt-8">
+
+        <div className="mt-8 flex items-center gap-2">
           {renderInput('l')}
         </div>
       </div>

@@ -17,6 +17,30 @@ const shuffleArray = <T>(array: T[]): T[] => {
   return arr;
 };
 
+const SYNC_WORD_PROBLEMS = [
+  { question: "Nhà Lan có 15 con gà, mẹ mua thêm 12 con gà nữa. Hỏi nhà Lan có tất cả bao nhiêu con gà?", answer: 27 },
+  { question: "Bình có 45 viên bi, Bình cho Nam 15 viên bi. Hỏi Bình còn lại bao nhiêu viên bi?", answer: 30 },
+  { question: "Lớp 2A có 18 bạn nam và 17 bạn nữ. Hỏi lớp 2A có tất cả bao nhiêu học sinh?", answer: 35 },
+  { question: "Trong vườn có 32 cây cam và 28 cây bưởi. Hỏi trong vườn có tất cả bao nhiêu cây?", answer: 60 },
+  { question: "Cuộn dây điện dài 95m, thợ điện đã dùng hết 40m. Hỏi cuộn dây điện còn lại bao nhiêu mét?", answer: 55 },
+  { question: "Mai có 24 bông hoa, Hồng có nhiều hơn Mai 10 bông hoa. Hỏi Hồng có bao nhiêu bông hoa?", answer: 34 },
+  { question: "Đàn vịt có 65 con, 25 con đang bơi dưới ao, số còn lại ở trên bờ. Hỏi có bao nhiêu con vịt trên bờ?", answer: 40 },
+  { question: "Lan cao 96cm, Hoa thấp hơn Lan 5cm. Hỏi Hoa cao bao nhiêu xăng-ti-mét?", answer: 91 },
+  { question: "Cửa hàng có 80 quyển vở, đã bán được 30 quyển. Hỏi cửa hàng còn lại bao nhiêu quyển vở?", answer: 50 },
+  { question: "Hà có 30 viên kẹo, Hà cho em 12 viên. Hỏi Hà còn lại bao nhiêu viên kẹo?", answer: 18 }
+];
+
+export const generateLocalWordProblemSync = (): MathProblem => {
+  const p = SYNC_WORD_PROBLEMS[getRandomInt(0, SYNC_WORD_PROBLEMS.length - 1)];
+  return {
+    id: generateId(),
+    type: 'word',
+    question: p.question,
+    answer: p.answer,
+    userAnswer: ''
+  };
+};
+
 const SHAPES = {
   TRI: { id: 'tri', name: 'hình tam giác', d: "M 50 15 L 85 85 L 15 85 Z", color: '#3b82f6' },
   SQ: { id: 'sq', name: 'hình vuông', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z", color: '#10b981' },
@@ -59,8 +83,17 @@ export const generateGeometryProblems = (count: number): MathProblem[] => {
   for (let i = 0; i < count; i++) {
     const currentType = types[i % types.length];
     if (currentType === 'path_length') {
-      const segments = [{ label: 'AB', length: getRandomInt(2, 6) }, { label: 'BC', length: getRandomInt(2, 6) }];
-      problems.push({ id: generateId(), type: 'geometry', visualType: 'path_length', question: `Độ dài đường gấp khúc ABC là:`, visualData: segments, answer: segments.reduce((sum, s) => sum + s.length, 0), unit: 'cm' });
+      const numSegments = getRandomInt(3, 4);
+      const labels = "ABCDE";
+      const pathLabel = labels.substring(0, numSegments + 1);
+      const segments = [];
+      let total = 0;
+      for (let j = 0; j < numSegments; j++) {
+        const len = getRandomInt(5, 20);
+        segments.push({ label: labels[j] + labels[j+1], length: len });
+        total += len;
+      }
+      problems.push({ id: generateId(), type: 'geometry', visualType: 'path_length', question: `Độ dài đường gấp khúc ${pathLabel} là:`, visualData: segments, answer: total, unit: 'cm' });
     } else {
       problems.push(generateIdentifyShapesProblem());
     }
@@ -70,9 +103,7 @@ export const generateGeometryProblems = (count: number): MathProblem[] => {
 
 export const generateMeasurementProblems = (count: number): MathProblem[] => {
   const problems: MathProblem[] = [];
-  // Phân bổ các dạng: balance (cân đĩa), spring (cân đồng hồ), beaker (bình lít), calc (tính toán)
   const types = shuffleArray(['balance', 'spring', 'beaker', 'calc', 'balance', 'spring', 'beaker', 'calc']);
-  
   for (let i = 0; i < count; i++) {
     const visualType = types[i % types.length] as any;
     if (visualType === 'balance') {
@@ -106,11 +137,20 @@ export const generateVerticalProblems = (count: number): MathProblem[] => {
 export const generateComparisonProblems = (count: number): MathProblem[] => {
   const problems: MathProblem[] = [];
   for (let i = 0; i < count; i++) {
-    const base = getRandomInt(10, 30) + (i * 2); // Tránh trùng số
-    let leftNums = [base, getRandomInt(5, 20)], rightNums = [base + getRandomInt(-2, 2), getRandomInt(5, 20)];
-    const leftSum = leftNums[0] + leftNums[1], rightSum = rightNums[0] + rightNums[1];
-    let answer = leftSum > rightSum ? '>' : (leftSum < rightSum ? '<' : '=');
-    problems.push({ id: generateId(), type: 'comparison', visualType: 'compare_expr', numbers: [...leftNums, ...rightNums], answer: answer, question: "Điền dấu >, < hoặc = vào ô trống:" });
+    const opLeft = Math.random() > 0.5 ? '+' : '-';
+    let n1Left, n2Left, resLeft;
+    if (opLeft === '+') { n1Left = getRandomInt(10, 40); n2Left = getRandomInt(5, 30); resLeft = n1Left + n2Left; }
+    else { n1Left = getRandomInt(40, 80); n2Left = getRandomInt(5, 30); resLeft = n1Left - n2Left; }
+    const opRight = Math.random() > 0.5 ? '+' : '-';
+    let n1Right, n2Right, resRight;
+    if (opRight === '+') { n1Right = getRandomInt(10, 40); n2Right = getRandomInt(5, 30); resRight = n1Right + n2Right; }
+    else { n1Right = getRandomInt(40, 80); n2Right = getRandomInt(5, 30); resRight = n1Right - n2Right; }
+    if (Math.random() > 0.7) {
+      if (opRight === '+') { n1Right = Math.max(5, resLeft - getRandomInt(2, 20)); n2Right = resLeft - n1Right; resRight = n1Right + n2Right; }
+      else { n1Right = resLeft + getRandomInt(5, 15); n2Right = n1Right - resLeft; resRight = n1Right - n2Right; }
+    }
+    const answer = resLeft > resRight ? '>' : (resLeft < resRight ? '<' : '=');
+    problems.push({ id: generateId(), type: 'comparison', visualType: 'compare_expr', numbers: [n1Left, n2Left, n1Right, n2Right], operators: [opLeft, opRight], answer: answer, question: "Điền dấu >, < hoặc = vào ô trống:" });
   }
   return problems;
 };
@@ -133,11 +173,7 @@ export const generateDmProblems = (count: number): MathProblem[] => {
   const problems: MathProblem[] = [];
   for (let i = 0; i < count; i++) {
     const op = Math.random() > 0.5 ? '+' : '-';
-    // Đảm bảo số khác nhau cho từng câu
-    let offset = i * 3;
-    let n1 = getRandomInt(10 + offset, 40 + offset), 
-        n2 = op === '+' ? getRandomInt(5, 30) : getRandomInt(1, n1 - 5), 
-        ans = op === '+' ? n1 + n2 : n1 - n2;
+    let n1 = getRandomInt(10, 40), n2 = op === '+' ? getRandomInt(5, 30) : getRandomInt(1, n1 - 5), ans = op === '+' ? n1 + n2 : n1 - n2;
     problems.push({ id: generateId(), type: 'measurement', visualType: 'calc', numbers: [n1, n2], operators: [op], answer: ans, unit: 'dm', question: `${n1} dm ${op} ${n2} dm = ? dm` });
   }
   return problems;
@@ -156,7 +192,8 @@ export const generatePatternProblems = (count: number): MathProblem[] => {
 };
 
 export const generateMixedProblems = (count: number): MathProblem[] => {
-  const generators = [
+  const firstProblem = generateLocalWordProblemSync();
+  const otherGenerators = [
     () => generateVerticalProblems(1)[0],
     () => generateComparisonProblems(1)[0],
     () => generateMeasurementProblems(1)[0],
@@ -165,19 +202,13 @@ export const generateMixedProblems = (count: number): MathProblem[] => {
     () => generateFillBlankProblems(1)[0],
     () => generateExpressionProblems(1)[0],
     () => generateGeometryProblems(1)[0],
-    () => generateChallengeProblem(),
-    () => generatePuzzleProblem()
+    () => generateChallengeProblem()
   ];
-  
-  // Xáo trộn tuyệt đối danh sách generators
-  const shuffledGenerators = shuffleArray(generators);
-  
-  const result: MathProblem[] = [];
-  // Lấy chính xác mỗi generator 1 lần để đảm bảo 10 câu là 10 dạng hoàn toàn khác nhau
-  for (let i = 0; i < Math.min(count, shuffledGenerators.length); i++) {
-    result.push(shuffledGenerators[i]());
+  const shuffledOthers = shuffleArray(otherGenerators);
+  const result: MathProblem[] = [firstProblem];
+  for (let i = 0; i < Math.min(count - 1, shuffledOthers.length); i++) {
+    result.push(shuffledOthers[i]());
   }
-  
   return result;
 };
 

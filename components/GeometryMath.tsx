@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MathProblem } from '../types';
 
@@ -97,65 +98,96 @@ const GeometryMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
   // --- Path Length Render ---
   if (problem.visualType === 'path_length') {
       const segments = Array.isArray(problem.visualData) ? problem.visualData : [];
+      const numPoints = segments.length + 1;
+      const pointLabels = "ABCDE";
       const points = [];
-      let startX = 20;
-      let startY = 80;
-      points.push({x: startX, y: startY});
       
-      segments.forEach((seg: any, idx: number) => {
-           const newX = startX + 60;
-           const newY = idx % 2 === 0 ? 20 : 80;
-           points.push({x: newX, y: newY});
-           startX = newX;
-      });
+      // Căn chỉnh khoảng cách dựa trên số điểm để luôn vừa khung
+      const stepX = segments.length > 3 ? 60 : 80;
+      const totalWidth = (numPoints - 1) * stepX + 40;
+      let currentX = 20;
+      
+      for (let i = 0; i < numPoints; i++) {
+          const y = i % 2 === 0 ? 80 : 20;
+          points.push({ x: currentX, y, label: pointLabels[i] });
+          currentX += stepX;
+      }
 
-      const pathD = points.map((p, i) => (i===0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
+      const pathD = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
 
       return (
-          <div className={`p-6 rounded-xl border-2 flex flex-col items-center justify-center bg-white shadow-sm transition-all w-full ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-teal-100 hover:border-teal-300'}`}>
-               <h3 className="text-gray-700 font-bold mb-2">{problem.question}</h3>
-               <div className="w-full max-w-xs overflow-hidden relative h-32 my-2">
-                   <svg width="100%" height="100%" viewBox="0 0 240 100" preserveAspectRatio="xMidYMid meet">
-                       <path d={pathD} fill="none" stroke="#0D9488" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <div className={`p-6 rounded-[32px] border-4 flex flex-col items-center justify-center bg-white shadow-xl transition-all w-full ${isCorrect ? 'border-green-400 bg-green-50' : isWrong ? 'border-red-400 bg-red-50' : 'border-teal-100 hover:border-teal-300'}`}>
+               <h3 className="text-xl font-black text-gray-800 mb-6 text-center">{problem.question}</h3>
+               
+               <div className="w-full max-w-md overflow-visible relative h-40 my-4 flex justify-center">
+                   <svg width="100%" height="100%" viewBox={`0 0 ${totalWidth} 100`} preserveAspectRatio="xMidYMid meet" className="overflow-visible">
+                       {/* Đường gấp khúc */}
+                       <path d={pathD} fill="none" stroke="#0D9488" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />
+                       
+                       {/* Các điểm và nhãn điểm */}
                        {points.map((p, i) => (
-                           <circle key={i} cx={p.x} cy={p.y} r="4" fill="#0F766E" />
+                           <g key={i}>
+                               <circle cx={p.x} cy={p.y} r="6" fill="#0F766E" stroke="white" strokeWidth="2" />
+                               <text x={p.x} y={p.y + (p.y > 50 ? 25 : -15)} textAnchor="middle" className="text-sm font-black fill-teal-800">
+                                   {p.label}
+                               </text>
+                           </g>
                        ))}
+                       
+                       {/* Độ dài đoạn thẳng */}
                        {segments.map((seg: any, i: number) => {
                            const p1 = points[i];
                            const p2 = points[i+1];
                            const mx = (p1.x + p2.x) / 2;
                            const my = (p1.y + p2.y) / 2;
+                           
+                           // Tính góc để nhãn song song hoặc nằm ngang dễ nhìn
                            return (
-                               <text key={i} x={mx} y={my - 10} textAnchor="middle" className="text-xs font-bold fill-gray-600">
-                                   {seg.length}cm
-                               </text>
+                               <g key={i}>
+                                   <rect x={mx - 15} y={my - 12} width="30" height="18" rx="4" fill="white" fillOpacity="0.8" />
+                                   <text x={mx} y={my + 2} textAnchor="middle" className="text-[12px] font-black fill-rose-600">
+                                       {seg.length}
+                                   </text>
+                                   <text x={mx + 12} y={my + 2} textAnchor="start" className="text-[8px] font-bold fill-gray-400">
+                                       cm
+                                   </text>
+                               </g>
                            )
                        })}
                    </svg>
                </div>
-               <div className="flex items-center gap-2 mt-4 text-xl font-bold text-gray-700">
-                   <span>Đáp án:</span>
-                    <div className="relative">
+
+               <div className="flex flex-col sm:flex-row items-center gap-4 mt-8 bg-teal-50 p-6 rounded-3xl border-2 border-teal-100">
+                    <span className="text-lg font-black text-teal-800">Đáp án của bé là:</span>
+                    <div className="relative flex items-center gap-2">
                         <input 
                             type="number" 
                             inputMode="numeric"
                             value={problem.userAnswer || ''}
                             onChange={(e) => onUpdate(e.target.value)}
                             disabled={showResult}
-                            className={`w-20 text-center text-2xl font-bold p-1 rounded-lg border-2 outline-none focus:ring-2 focus:ring-teal-300 ${
+                            className={`w-24 text-center text-3xl font-black p-3 rounded-2xl border-4 outline-none transition-all shadow-inner ${
                                 showResult 
-                                ? (isCorrect ? 'text-green-600 border-green-200 bg-green-100' : 'text-red-500 border-red-200 bg-red-100') 
-                                : 'text-gray-800 border-gray-300 bg-gray-50'
+                                ? (isCorrect ? 'text-green-600 border-green-400 bg-white' : 'text-red-500 border-red-400 bg-white') 
+                                : 'text-gray-800 border-gray-200 bg-white focus:border-teal-400'
                             }`}
+                            placeholder="..."
                         />
-                         {isWrong && (
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow-sm whitespace-nowrap z-10">
-                                {problem.answer}
+                        <span className="text-xl font-black text-teal-600">cm</span>
+                        
+                        {isWrong && (
+                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-xl whitespace-nowrap z-10 animate-bounce-short">
+                                Đúng là: {problem.answer} cm
                             </div>
                         )}
                     </div>
-                    <span>cm</span>
                </div>
+
+               {isCorrect && (
+                   <div className="mt-4 text-green-600 font-black animate-fadeIn">
+                       ✨ Tuyệt vời! Bé tính toán rất nhanh!
+                   </div>
+               )}
           </div>
       )
   }
