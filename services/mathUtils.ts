@@ -7,14 +7,65 @@ const getRandomInt = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-// ... (Các hàm khác giữ nguyên)
+// Cấu hình các loại hình cơ bản
+const SHAPE_CONFIGS = [
+  { id: 'triangle', name: 'hình tam giác', type: 'tri', d: "M 50 10 L 90 90 L 10 90 Z" },
+  { id: 'quad', name: 'hình tứ giác', type: 'quad', d: "M 15 20 L 85 15 L 95 80 L 5 85 Z" },
+  { id: 'circle', name: 'hình tròn', type: 'circle', d: "M 50 50 m -40 0 a 40 40 0 1 0 80 0 a 40 40 0 1 0 -80 0" },
+  { id: 'square', name: 'hình vuông', type: 'square', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z" },
+  { id: 'rhombus', name: 'hình thoi', type: 'rhombus', d: "M 50 10 L 90 50 L 50 90 L 10 50 Z" }
+];
+
+export const generateIdentifyShapesProblem = (): MathProblem => {
+  // Chọn ngẫu nhiên 1 hình làm mục tiêu
+  const target = SHAPE_CONFIGS[getRandomInt(0, SHAPE_CONFIGS.length - 1)];
+  
+  // Tạo danh sách 11 hình ngẫu nhiên (bao gồm cả hình mục tiêu và hình gây nhiễu)
+  const shapes: any[] = [];
+  const totalShapes = 11;
+  
+  // Đảm bảo có ít nhất 2-4 hình đúng trong danh sách
+  const targetCount = getRandomInt(2, 4);
+  
+  for (let i = 0; i < totalShapes; i++) {
+    let source;
+    if (i < targetCount) {
+      source = target; // Ép buộc là hình đúng
+    } else {
+      // Chọn ngẫu nhiên hình bất kỳ (có thể trùng target hoặc không)
+      source = SHAPE_CONFIGS[getRandomInt(0, SHAPE_CONFIGS.length - 1)];
+    }
+    
+    shapes.push({
+      id: generateId(),
+      num: i + 1,
+      type: source.type,
+      color: '#' + (Math.random() * 0xFFFFFF << 0).toString(16).padStart(6, '0'),
+      d: source.d
+    });
+  }
+
+  // Trộn lẫn các hình
+  const shuffledShapes = shapes.sort(() => Math.random() - 0.5);
+
+  return {
+    id: generateId(),
+    type: 'geometry',
+    visualType: 'identify_shape',
+    question: `Bé hãy chỉ ra các mảnh bìa là ${target.name} nhé:`,
+    visualData: { 
+      targetId: target.type, 
+      shapes: shuffledShapes 
+    },
+    answer: 0 // Logic kiểm tra được xử lý trong App.tsx dựa trên targetId
+  };
+};
 
 export const generateChallengeProblem = (): MathProblem => {
   const challengeTypes = ['dissection', 'counting', 'logic'];
   const type = challengeTypes[getRandomInt(0, challengeTypes.length - 1)];
 
   if (type === 'dissection') {
-    // Kiểu 1: Ba mảnh bìa này KHÔNG THỂ ghép thành hình nào?
     return {
       id: generateId(),
       type: 'challenge',
@@ -35,8 +86,6 @@ export const generateChallengeProblem = (): MathProblem => {
       }
     };
   } else if (type === 'counting') {
-    // Kiểu 2: Hình vẽ dưới đây có bao nhiêu hình tứ giác?
-    const answers = ["3", "4", "5"];
     const correctIdx = getRandomInt(0, 2);
     return {
       id: generateId(),
@@ -56,7 +105,6 @@ export const generateChallengeProblem = (): MathProblem => {
       }
     };
   } else {
-    // Kiểu 3: Hình nào còn thiếu trong quy luật?
     return {
       id: generateId(),
       type: 'challenge',
@@ -76,8 +124,6 @@ export const generateChallengeProblem = (): MathProblem => {
     };
   }
 };
-
-// ... (Các hàm khác giữ nguyên)
 
 export const generateDmProblems = (count: number): MathProblem[] => {
   const problems: MathProblem[] = [];
@@ -151,11 +197,6 @@ export const generatePuzzleProblem = (): MathProblem => {
       ]
     }
   };
-};
-
-export const generateIdentifyQuadsProblem = (): MathProblem => {
-    const shapes = [{ id: '1', num: 1, type: 'quad', color: '#f472b6', d: "M 10 10 L 90 20 L 80 80 L 15 75 Z" }, { id: '2', num: 2, type: 'tri', color: '#facc15', d: "M 10 20 L 90 50 L 30 90 Z" }, { id: '3', num: 3, type: 'pent', color: '#2dd4bf', d: "M 50 5 L 95 40 L 80 90 L 20 90 L 5 40 Z" }, { id: '4', num: 4, type: 'tri', color: '#fb923c', d: "M 5 10 L 95 40 L 60 85 Z" }, { id: '5', num: 5, type: 'quad', color: '#a3e635', d: "M 30 10 L 80 5 L 90 90 L 10 90 Z" }, { id: '6', num: 2, type: 'tri', color: '#166534', d: "M 50 10 L 90 90 L 10 90 Z" }, { id: '7', num: 7, type: 'quad', color: '#fbbf24', d: "M 20 5 L 95 30 L 80 90 L 5 45 Z" }, { id: '8', num: 8, type: 'quad', color: '#818cf8', d: "M 5 5 L 90 30 L 80 90 L 15 80 Z" }, { id: '9', num: 9, type: 'tri', color: '#c084fc', d: "M 50 5 L 90 70 L 10 70 Z" }, { id: '10', num: 10, type: 'quad', color: '#93c5fd', d: "M 50 5 L 95 50 L 50 95 L 5 50 Z" }, { id: '11', num: 11, type: 'pent', color: '#eab308', d: "M 50 5 L 95 30 L 85 85 L 15 85 L 5 30 Z" }];
-    return { id: 'special-quads-1', type: 'geometry', visualType: 'identify_shape', question: "Chỉ ra các mảnh bìa hình tứ giác trong hình sau:", visualData: { targetId: 'quad', shapes }, answer: 0 };
 };
 
 export const generateVerticalProblems = (count: number): MathProblem[] => {

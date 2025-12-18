@@ -10,7 +10,7 @@ import {
   generateMeasurementProblems, 
   generateGeometryProblems,
   generatePatternProblems,
-  generateIdentifyQuadsProblem,
+  generateIdentifyShapesProblem,
   generateChallengeProblem,
   generatePuzzleProblem,
   generateComparisonProblems,
@@ -82,7 +82,7 @@ const App: React.FC = () => {
     else if (activeTab === 'pattern') setProblems(generatePatternProblems(4));
     else if (activeTab === 'compare') setProblems(generateComparisonProblems(5));
     else if (activeTab === 'dm') setProblems(generateDmProblems(10));
-    else if (activeTab === 'practice') setProblems([generateIdentifyQuadsProblem()]);
+    else if (activeTab === 'practice') setProblems([generateIdentifyShapesProblem()]);
     else if (activeTab === 'challenge') setProblems([generateChallengeProblem()]);
     else if (activeTab === 'puzzle') setProblems([generatePuzzleProblem()]);
     else setProblems([]);
