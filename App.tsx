@@ -116,9 +116,22 @@ const App: React.FC = () => {
         return targetIds.length === userSelected.length && targetIds.every((id: string) => userSelected.includes(id));
       }
       if (p.type === 'puzzle') {
-        const userSelected = p.userAnswer ? JSON.parse(p.userAnswer) : [];
-        const targetIds = p.answer as string[];
-        return targetIds.length === userSelected.length && targetIds.every(id => userSelected.includes(id));
+        const placedPieces = p.userAnswer ? JSON.parse(p.userAnswer) : {};
+        const correctAnswers = p.answer as Record<string, any>;
+        const targetKeys = Object.keys(correctAnswers);
+        return targetKeys.every(targetId => {
+            const placed = placedPieces[targetId];
+            const correct = correctAnswers[targetId];
+            return placed && placed.sourceId === correct.sourceId && placed.rotation === correct.rotation;
+        }) && Object.keys(placedPieces).length === targetKeys.length;
+      }
+      if (p.type === 'challenge') {
+          return p.userAnswer === p.answer;
+      }
+      if (p.type === 'pattern') {
+          const userAnswers = p.userAnswer ? JSON.parse(p.userAnswer) : {};
+          const hiddenCells = p.visualData.hiddenCells as any[];
+          return hiddenCells.every(h => userAnswers[`${h.r}-${h.c}`] === h.target);
       }
       return parseInt(p.userAnswer || '') === p.answer;
     });

@@ -7,42 +7,77 @@ const getRandomInt = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-// ... (các hàm generate khác giữ nguyên)
+// ... (Các hàm khác giữ nguyên)
 
-export const generatePuzzleProblem = (): MathProblem => {
-  return {
-    id: 'puzzle-easy-1',
-    type: 'puzzle',
-    visualType: 'dissection',
-    question: "Bé hãy tìm mảnh ghép có màu và hình dạng giống với bóng mờ trong hình vuông nhé!",
-    answer: {
-      "5": { sourceId: "a1", rotation: 90 },
-      "8": { sourceId: "a2", rotation: 0 }
-    }, 
-    visualData: {
-      sourceShapes: [
-        { id: 'a1', color: '#fbbf24', d: "M 10 10 L 90 10 L 90 90 L 50 90 L 10 50 Z", name: "Mảnh vàng" }, // Hình ngũ giác đặc trưng
-        { id: 'a2', color: '#f87171', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z", name: "Mảnh đỏ" }   // Hình vuông
-      ],
-      gridPieces: [
-        { id: '1', d: "M 0 0 L 40 0 L 20 20 Z" },
-        { id: '2', d: "M 40 0 L 80 0 L 60 20 Z" },
-        { id: '3', d: "M 80 0 L 120 0 L 100 20 Z" },
-        { id: '4', d: "M 0 0 L 20 20 L 0 40 Z" },
-        { id: '5', d: "M 20 20 L 60 20 L 60 60 L 40 60 L 20 40 Z", hintColor: '#fde68a' }, // Mục tiêu 1 - Vàng nhạt
-        { id: '6', d: "M 60 20 L 100 20 L 80 40 Z" },
-        { id: '7', d: "M 0 40 L 20 40 L 0 80 Z" },
-        { id: '8', d: "M 40 60 L 80 60 L 80 100 L 40 100 Z", hintColor: '#fecaca' }, // Mục tiêu 2 - Đỏ nhạt
-        { id: '9', d: "M 80 40 L 100 20 L 120 40 L 100 60 Z" },
-        { id: '10', d: "M 0 80 L 40 60 L 40 100 L 0 120 Z" },
-        { id: '11', d: "M 80 100 L 120 120 L 80 120 Z" },
-        { id: '12', d: "M 40 100 L 80 100 L 60 120 Z" }
-      ]
-    }
-  };
+export const generateChallengeProblem = (): MathProblem => {
+  const challengeTypes = ['dissection', 'counting', 'logic'];
+  const type = challengeTypes[getRandomInt(0, challengeTypes.length - 1)];
+
+  if (type === 'dissection') {
+    // Kiểu 1: Ba mảnh bìa này KHÔNG THỂ ghép thành hình nào?
+    return {
+      id: generateId(),
+      type: 'challenge',
+      visualType: 'puzzle_logic',
+      question: "Ba mảnh bìa màu xanh dưới đây KHÔNG THỂ ghép được thành hình nào?",
+      answer: "2", 
+      visualData: {
+        sourceShapes: [
+          { id: 's1', d: "M 20 20 L 50 20 L 50 50 L 20 50 Z", color: '#84cc16' }, 
+          { id: 's2', d: "M 50 20 L 80 50 L 50 50 Z", color: '#84cc16' }, 
+          { id: 's3', d: "M 20 50 L 50 50 L 50 80 Z", color: '#84cc16' }
+        ],
+        options: [
+          { id: '1', label: '1', name: 'Hình thang', d: "M 10 30 L 90 30 L 70 70 L 30 70 Z" }, 
+          { id: '2', label: '2', name: 'Hình tròn', d: "M 50 50 m -35 0 a 35 35 0 1 0 70 0 a 35 35 0 1 0 -70 0" }, 
+          { id: '3', label: '3', name: 'Hình chữ nhật', d: "M 10 20 L 90 20 L 90 80 L 10 80 Z" }
+        ]
+      }
+    };
+  } else if (type === 'counting') {
+    // Kiểu 2: Hình vẽ dưới đây có bao nhiêu hình tứ giác?
+    const answers = ["3", "4", "5"];
+    const correctIdx = getRandomInt(0, 2);
+    return {
+      id: generateId(),
+      type: 'challenge',
+      visualType: 'puzzle_logic',
+      question: `Hình vẽ dưới đây có bao nhiêu hình tứ giác?`,
+      answer: (correctIdx + 1).toString(),
+      visualData: {
+        sourceShapes: [
+          { id: 'q1', d: "M 10 10 L 90 10 L 90 90 L 10 90 L 10 10 M 10 10 L 90 90 M 90 10 L 10 90", color: '#fb7185' }
+        ],
+        options: [
+          { id: '1', label: 'A', name: '3 hình', d: "M 30 40 L 70 40 L 70 60 L 30 60 Z" },
+          { id: '2', label: 'B', name: '4 hình', d: "M 30 40 L 70 40 L 70 60 L 30 60 Z" },
+          { id: '3', label: 'C', name: '5 hình', d: "M 30 40 L 70 40 L 70 60 L 30 60 Z" }
+        ]
+      }
+    };
+  } else {
+    // Kiểu 3: Hình nào còn thiếu trong quy luật?
+    return {
+      id: generateId(),
+      type: 'challenge',
+      visualType: 'puzzle_logic',
+      question: "Hình nào là mảnh bìa còn thiếu để hoàn thành hình vuông?",
+      answer: "1",
+      visualData: {
+        sourceShapes: [
+          { id: 'base', d: "M 10 10 L 90 10 L 90 50 L 50 50 L 50 90 L 10 90 Z", color: '#a78bfa' }
+        ],
+        options: [
+          { id: '1', label: 'A', name: 'Mảnh thiếu', d: "M 50 50 L 90 50 L 90 90 L 50 90 Z" },
+          { id: '2', label: 'B', name: 'Mảnh sai', d: "M 10 10 L 40 10 L 25 40 Z" },
+          { id: '3', label: 'C', name: 'Mảnh sai', d: "M 20 20 L 80 20 L 50 80 Z" }
+        ]
+      }
+    };
+  }
 };
 
-// ... (các hàm generate khác giữ nguyên)
+// ... (Các hàm khác giữ nguyên)
 
 export const generateDmProblems = (count: number): MathProblem[] => {
   const problems: MathProblem[] = [];
@@ -85,16 +120,35 @@ export const generateComparisonProblems = (count: number): MathProblem[] => {
   return problems;
 };
 
-export const generateChallengeProblem = (): MathProblem => {
+export const generatePuzzleProblem = (): MathProblem => {
   return {
-    id: 'challenge-p93-q5',
-    type: 'challenge',
-    visualType: 'puzzle_logic',
-    question: "Ba mảnh bìa màu xanh dưới đây không thể ghép được hình nào trong các hình sau?",
-    answer: "2", 
+    id: 'puzzle-easy-1',
+    type: 'puzzle',
+    visualType: 'dissection',
+    question: "Bé hãy tìm mảnh ghép có màu và hình dạng giống với bóng mờ trong hình vuông nhé!",
+    answer: {
+      "5": { sourceId: "a1", rotation: 90 },
+      "8": { sourceId: "a2", rotation: 0 }
+    }, 
     visualData: {
-      sourceShapes: [{ id: 's1', d: "M 20 20 L 50 20 L 50 50 L 20 50 Z", color: '#84cc16' }, { id: 's2', d: "M 50 20 L 80 50 L 50 50 Z", color: '#84cc16' }, { id: 's3', d: "M 20 50 L 50 50 L 50 80 Z", color: '#84cc16' }],
-      options: [{ id: '1', label: '1', name: 'Hình chữ nhật', d: "M 10 30 L 90 30 L 90 70 L 10 70 Z" }, { id: '2', label: '2', name: 'Hình vuông', d: "M 25 25 L 75 25 L 75 75 L 25 75 Z" }, { id: '3', label: '3', name: 'Hình thang', d: "M 20 30 L 80 30 L 95 70 L 5 70 Z" }]
+      sourceShapes: [
+        { id: 'a1', color: '#fbbf24', d: "M 10 10 L 90 10 L 90 90 L 50 90 L 10 50 Z", name: "Mảnh vàng" },
+        { id: 'a2', color: '#f87171', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z", name: "Mảnh đỏ" }
+      ],
+      gridPieces: [
+        { id: '1', d: "M 0 0 L 40 0 L 20 20 Z" },
+        { id: '2', d: "M 40 0 L 80 0 L 60 20 Z" },
+        { id: '3', d: "M 80 0 L 120 0 L 100 20 Z" },
+        { id: '4', d: "M 0 0 L 20 20 L 0 40 Z" },
+        { id: '5', d: "M 20 20 L 60 20 L 60 60 L 40 60 L 20 40 Z", hintColor: '#fde68a' },
+        { id: '6', d: "M 60 20 L 100 20 L 80 40 Z" },
+        { id: '7', d: "M 0 40 L 20 40 L 0 80 Z" },
+        { id: '8', d: "M 40 60 L 80 60 L 80 100 L 40 100 Z", hintColor: '#fecaca' },
+        { id: '9', d: "M 80 40 L 100 20 L 120 40 L 100 60 Z" },
+        { id: '10', d: "M 0 80 L 40 60 L 40 100 L 0 120 Z" },
+        { id: '11', d: "M 80 100 L 120 120 L 80 120 Z" },
+        { id: '12', d: "M 40 100 L 80 100 L 60 120 Z" }
+      ]
     }
   };
 };
@@ -180,7 +234,7 @@ export const generateGeometryProblems = (count: number): MathProblem[] => {
     const shapeTypes = [{ id: 'triangle', type: 'triangle', name: 'hình tam giác', d: "M 50 10 L 90 90 L 10 90 Z" }, { id: 'quad', type: 'quad', name: 'hình tứ giác', d: "M 15 20 L 85 15 L 95 80 L 5 85 Z" }, { id: 'rectangle', type: 'quad', name: 'hình chữ nhật', d: "M 10 30 L 90 30 L 90 70 L 10 70 Z" }, { id: 'square', type: 'quad', name: 'hình vuông', d: "M 20 20 L 80 20 L 80 80 L 20 80 Z" }, { id: 'circle', type: 'circle', name: 'hình tròn', d: "M 50 50 m -40 0 a 40 40 0 1 0 80 0 a 40 40 0 1 0 -80 0" }, { id: 'rhombus', type: 'quad', name: 'hình thoi', d: "M 50 10 L 90 50 L 50 90 L 10 50 Z" }];
     for (let i = 0; i < count; i++) {
         if (i % 2 === 0) { const segments = [{ label: 'AB', length: getRandomInt(2, 6) }, { label: 'BC', length: getRandomInt(2, 6) }, { label: 'CD', length: getRandomInt(2, 6) }]; problems.push({ id: generateId(), type: 'geometry', visualType: 'path_length', question: `Độ dài đường gấp khúc ABCD là:`, visualData: segments, answer: segments.reduce((sum, s) => sum + s.length, 0), unit: 'cm' }); }
-        else { const targetEntry = shapeTypes[getRandomInt(0, shapeTypes.length-1)]; const shapes = [...shapeTypes].sort(() => Math.random() - 0.5).slice(0, 4).map(s => ({...s, color: '#'+(Math.random()*0xFFFFFF<<0).toString(16)})); if(!shapes.find(s=>s.id===targetEntry.id)) shapes[0] = {...targetEntry, color: '#'+(Math.random()*0xFFFFFF<<0).toString(16)})); problems.push({ id: generateId(), type: 'geometry', visualType: 'identify_shape', question: `Hình nào là ${targetEntry.name}?`, visualData: { targetId: targetEntry.type, shapes }, answer: 0 }); }
+        else { const targetEntry = shapeTypes[getRandomInt(0, shapeTypes.length-1)]; const shapes = [...shapeTypes].sort(() => Math.random() - 0.5).slice(0, 4).map(s => ({...s, color: '#'+(Math.random()*0xFFFFFF<<0).toString(16)})); if(!shapes.find(s=>s.id===targetEntry.id)) shapes[0] = {...targetEntry, color: '#'+(Math.random()*0xFFFFFF<<0).toString(16)}; problems.push({ id: generateId(), type: 'geometry', visualType: 'identify_shape', question: `Hình nào là ${targetEntry.name}?`, visualData: { targetId: targetEntry.type, shapes }, answer: 0 }); }
     }
     return problems;
 };
