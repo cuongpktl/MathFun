@@ -72,33 +72,71 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
     );
   }
 
-  // --- 2. Cân đồng hồ (Spring Scale) ---
+  // --- 2. Cân đồng hồ (Spring Scale) - CẢI TIẾN VẠCH CHIA 0-10 ---
   if (problem.visualType === 'spring') {
     const weight = typeof problem.visualData === 'number' ? problem.visualData : 0;
+    // Rotation: 0-10kg mapped to 0-360 degrees
     const rotation = weight * 36;
+    
     return (
       <div className="bg-emerald-50 p-6 rounded-[32px] border-4 border-emerald-100 flex flex-col items-center shadow-sm animate-fadeIn">
         <h3 className="text-gray-700 font-black mb-6 w-full text-center">Quả dưa hấu nặng bao nhiêu kg?</h3>
-        <div className="relative w-48 h-64 flex flex-col items-center">
-          <div className="z-10 w-36 h-28 -mb-4">
+        <div className="relative w-56 h-72 flex flex-col items-center">
+          {/* Vật cân */}
+          <div className="z-10 w-40 h-32 -mb-2">
             <svg viewBox="0 0 100 80" className="w-full h-full drop-shadow-xl">
               <ellipse cx="50" cy="40" rx="45" ry="35" fill="#166534" />
               <path d="M15 40 Q 50 50 85 40 M 25 20 Q 50 30 75 20 M 25 60 Q 50 50 75 60" stroke="#4ade80" strokeWidth="4" fill="none" opacity="0.3"/>
               <path d="M50 5 Q 55 -2 60 5" stroke="#3f6212" strokeWidth="4" fill="none" />
             </svg>
           </div>
-          <div className="w-32 h-4 bg-gray-300 rounded-full border-2 border-gray-400 shadow-inner"></div>
-          <div className="w-6 h-12 bg-gray-400"></div>
-          <div className="relative w-40 h-40 bg-emerald-600 rounded-[32px] border-b-8 border-emerald-800 shadow-2xl flex items-center justify-center">
-            <div className="w-32 h-32 bg-white rounded-full relative border-4 border-emerald-700 shadow-inner flex items-center justify-center">
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-                <div key={n} className="absolute inset-0 flex flex-col items-center pt-1" style={{ transform: `rotate(${n * 36}deg)` }}>
-                  <div className="w-1 h-3 bg-gray-300"></div>
-                  <span className="text-[10px] font-black text-gray-500 mt-1" style={{ transform: `rotate(-${n * 36}deg)` }}>{n}</span>
+          
+          {/* Giá đỡ */}
+          <div className="w-36 h-4 bg-gray-300 rounded-full border-2 border-gray-400 shadow-inner"></div>
+          <div className="w-8 h-12 bg-gray-400"></div>
+
+          {/* Thân cân */}
+          <div className="relative w-48 h-48 bg-emerald-600 rounded-[40px] border-b-8 border-emerald-800 shadow-2xl flex items-center justify-center">
+            {/* Mặt đồng hồ */}
+            <div className="w-40 h-40 bg-white rounded-full relative border-4 border-emerald-700 shadow-inner flex items-center justify-center">
+              
+              {/* Vạch chia nhỏ (mỗi 0.5kg) */}
+              {[...Array(20)].map((_, i) => (
+                <div key={`small-${i}`} className="absolute inset-0 flex flex-col items-center" style={{ transform: `rotate(${i * 18}deg)` }}>
+                  <div className="w-0.5 h-1.5 bg-gray-300 mt-1"></div>
                 </div>
               ))}
-              <div className="absolute top-1/2 left-1/2 w-1 h-14 bg-red-600 origin-bottom -translate-x-1/2 -translate-y-full rounded-full transition-transform duration-1000" style={{ transform: `translate(-50%, -100%) rotate(${rotation}deg)` }}></div>
-              <div className="w-3 h-3 bg-gray-800 rounded-full z-10 shadow-md"></div>
+
+              {/* Vạch số chính (0-9) */}
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                <div key={n} className="absolute inset-0 flex flex-col items-center pt-1" style={{ transform: `rotate(${n * 36}deg)` }}>
+                  <div className={`w-1.5 h-3.5 ${n % 5 === 0 ? 'bg-gray-800' : 'bg-gray-500'}`}></div>
+                  <div className="mt-1" style={{ transform: `rotate(-${n * 36}deg)` }}>
+                    {n === 0 ? (
+                      <div className="flex flex-col items-center -mt-1">
+                        <span className="text-[12px] font-black text-gray-900 leading-none">0</span>
+                        <span className="text-[10px] font-black text-red-500 leading-none mt-0.5">10</span>
+                      </div>
+                    ) : (
+                      <span className="text-[11px] font-black text-gray-600">{n}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Đơn vị kg ở giữa */}
+              <div className="absolute text-[10px] font-black text-emerald-200 uppercase tracking-widest top-[65%]">kg</div>
+
+              {/* Kim cân */}
+              <div 
+                className="absolute top-1/2 left-1/2 w-1.5 h-16 bg-red-600 origin-bottom -translate-x-1/2 -translate-y-full rounded-full transition-transform duration-1000 shadow-sm" 
+                style={{ transform: `translate(-50%, -100%) rotate(${rotation}deg)` }}
+              >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[8px] border-b-red-600 -mt-2"></div>
+              </div>
+              
+              {/* Tâm kim */}
+              <div className="w-4 h-4 bg-gray-800 rounded-full z-10 shadow-md border-2 border-gray-400"></div>
             </div>
           </div>
         </div>
@@ -109,12 +147,9 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
     );
   }
 
-  // --- 3. Bình chia độ (Beaker) - SỬA LẠI HOÀN TOÀN BẰNG SVG ---
+  // --- 3. Bình chia độ (Beaker) ---
   if (problem.visualType === 'beaker') {
     const level = typeof problem.visualData === 'number' ? problem.visualData : 0;
-    
-    // Tọa độ SVG: Bình cao 200 đơn vị, từ y=20 đến y=180
-    // Mỗi 1L tương ứng 16 đơn vị chiều cao (160 / 10 = 16)
     const baseY = 180;
     const waterY = baseY - (level * 16);
     const waterHeight = level * 16;
@@ -125,10 +160,7 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
         
         <div className="relative w-48 h-64 flex items-center justify-center">
           <svg width="160" height="220" viewBox="0 0 160 220" className="overflow-visible">
-            {/* Thân bình (Nền trắng trong suốt) */}
             <rect x="30" y="10" width="100" height="180" rx="10" fill="white" fillOpacity="0.8" stroke="#cbd5e1" strokeWidth="4" />
-            
-            {/* Mực nước (Blue) - Khớp chính xác với baseY và waterY */}
             <rect 
               x="32" 
               y={waterY} 
@@ -138,35 +170,28 @@ const MeasurementMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => 
               fill="#60A5FA" 
               className="transition-all duration-1000"
             />
-            {/* Đường gợn nước ở trên cùng */}
             {level > 0 && (
               <line x1="32" y1={waterY} x2="128" y2={waterY} stroke="#2563EB" strokeWidth="4" className="transition-all duration-1000" />
             )}
-
-            {/* Vạch chia độ */}
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(l => {
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(l => {
               const tickY = baseY - (l * 16);
-              const isEven = l % 2 === 0;
+              const isMajor = l % 2 === 0 || l === 0 || l === 10;
               return (
                 <g key={l}>
-                  {/* Vạch kẻ */}
                   <line 
-                    x1={isEven ? 80 : 100} 
+                    x1={isMajor ? 80 : 100} 
                     y1={tickY} 
                     x2="130" 
                     y2={tickY} 
-                    stroke={isEven ? "#64748b" : "#94a3b8"} 
-                    strokeWidth={isEven ? "3" : "2"} 
+                    stroke={isMajor ? "#475569" : "#94a3b8"} 
+                    strokeWidth={isMajor ? "3" : "1.5"} 
                   />
-                  {/* Nhãn số (chỉ hiện số chẵn để thoáng mắt) */}
-                  {isEven && (
+                  {isMajor && (
                     <text x="140" y={tickY + 5} className="text-[14px] font-black fill-gray-500">{l}</text>
                   )}
                 </g>
               );
             })}
-            
-            {/* Đáy bình */}
             <path d="M 30 180 Q 30 190 40 190 L 120 190 Q 130 190 130 180" fill="none" stroke="#cbd5e1" strokeWidth="4" />
           </svg>
         </div>

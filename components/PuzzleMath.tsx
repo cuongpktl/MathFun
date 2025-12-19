@@ -90,10 +90,9 @@ const PuzzleMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
         setActiveSourceId(null);
       } else {
         audioService.play('wrong');
-        // Có thể thêm rung lắc ở đây để báo hiệu chưa đúng hướng hoặc hình
       }
     } 
-    // TRƯỜNG HỢP 2: Đã lắp hình vào đó -> Cho phép gỡ ra để lắp lại nếu cần (không bắt buộc nhưng giúp trẻ sửa sai)
+    // TRƯỜNG HỢP 2: Đã lắp hình vào đó -> Cho phép gỡ ra để lắp lại nếu cần
     else if (alreadyPlaced) {
       audioService.play('click');
       const newPlaced = { ...placedPieces };
@@ -109,7 +108,7 @@ const PuzzleMath: React.FC<Props> = ({ problem, onUpdate, showResult }) => {
     });
 
   return (
-    <div ref={containerRef} className="bg-white p-4 sm:p-10 rounded-[48px] border-4 border-sky-100 shadow-2xl flex flex-col items-center w-full max-w-5xl mx-auto relative select-none touch-none overflow-hidden">
+    <div ref={containerRef} className="bg-white p-4 sm:p-10 rounded-[48px] border-4 border-sky-100 shadow-2xl flex flex-col items-center w-full max-w-5xl mx-auto relative select-none">
       
       <div className="text-center mb-8">
           <h3 className="text-3xl font-black text-gray-800 mb-2 uppercase tracking-tighter">Bé tập xếp hình {templateName}</h3>
